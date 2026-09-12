@@ -1,0 +1,8 @@
+{
+  "name": "AIKON — AI Konstruksi",
+  "short_name": "AIKON",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f6f4",
+  "theme_color": "#0e302d"
+}
