@@ -1,0 +1,76 @@
+{
+  "items": [
+    {
+      "id": "monitor-led",
+      "name": "Monitor LED",
+      "quantity": 3,
+      "icon": "▰",
+      "category": "Elektronik",
+      "description": "Monitor LED untuk ruang meeting.",
+      "active": true
+    },
+    {
+      "id": "kursi-kantor",
+      "name": "Kursi kantor",
+      "quantity": 12,
+      "icon": "♙",
+      "category": "Furniture",
+      "description": "Kursi kerja standar kantor.",
+      "active": true
+    },
+    {
+      "id": "meja-rapat",
+      "name": "Meja rapat",
+      "quantity": 1,
+      "icon": "▱",
+      "category": "Furniture",
+      "description": "Meja rapat utama ruang meeting.",
+      "active": true
+    },
+    {
+      "id": "ac-split",
+      "name": "AC split",
+      "quantity": 2,
+      "icon": "≋",
+      "category": "MEP",
+      "description": "Unit pendingin ruangan.",
+      "active": true
+    },
+    {
+      "id": "proyektor",
+      "name": "Proyektor",
+      "quantity": 1,
+      "icon": "◫",
+      "category": "Elektronik",
+      "description": "Proyektor presentasi ruang meeting.",
+      "active": true
+    },
+    {
+      "id": "whiteboard",
+      "name": "Whiteboard",
+      "quantity": 1,
+      "icon": "▯",
+      "category": "Perlengkapan",
+      "description": "Papan tulis ruang meeting.",
+      "active": true
+    },
+    {
+      "id": "lemari-arsip",
+      "name": "Lemari arsip",
+      "quantity": 2,
+      "icon": "▥",
+      "category": "Furniture",
+      "description": "Lemari penyimpanan dokumen.",
+      "active": true
+    },
+    {
+      "id": "apar",
+      "name": "APAR",
+      "quantity": 1,
+      "icon": "◉",
+      "category": "Keselamatan",
+      "description": "Alat pemadam api ringan.",
+      "active": true
+    }
+  ]
+}
