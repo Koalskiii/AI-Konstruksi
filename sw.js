@@ -1,49 +1,63 @@
-const CACHE = 'aikon-v4';
+const CACHE_NAME =
+  'aikon-v1';
+
 
 const ASSETS = [
+
   './',
+
   './index.html',
-  './styles.css',
+
+  './style.css',
+
   './app.js',
+
   './manifest.webmanifest'
+
 ];
 
 
 self.addEventListener(
+
   'install',
+
   event => {
 
     event.waitUntil(
 
       caches
-        .open(CACHE)
-
+        .open(CACHE_NAME)
         .then(
+
           cache =>
-            cache.addAll(ASSETS)
-        )
+            cache.addAll(
+              ASSETS
+            )
 
-        .then(
-          () =>
-            self.skipWaiting()
         )
 
     );
 
+
+    self.skipWaiting();
+
   }
+
 );
 
 
 self.addEventListener(
+
   'activate',
+
   event => {
 
     event.waitUntil(
 
       caches
         .keys()
-
         .then(
+
           keys =>
 
             Promise.all(
@@ -52,84 +66,54 @@ self.addEventListener(
 
                 .filter(
                   key =>
-                    key !== CACHE
+                    key !==
+                    CACHE_NAME
                 )
 
                 .map(
                   key =>
-                    caches.delete(key)
+                    caches.delete(
+                      key
+                    )
                 )
 
             )
 
         )
 
-        .then(
-          () =>
-            self.clients.claim()
-        )
-
     );
 
+
+    self.clients.claim();
+
   }
+
 );
 
 
 self.addEventListener(
+
   'fetch',
+
   event => {
 
     event.respondWith(
 
-      fetch(event.request)
-
-        .then(response => {
-
-          if (
-
-            event.request.method === 'GET'
-
-            &&
-
-            response.ok
-
-            &&
-
-            event.request.url.startsWith(
-              self.location.origin
-            )
-
-          ) {
-
-            const copy =
-              response.clone();
-
-
-            caches
-              .open(CACHE)
-              .then(
-                cache =>
-                  cache.put(
-                    event.request,
-                    copy
-                  )
-              );
-
-          }
-
-
-          return response;
-
-        })
+      fetch(
+        event.request
+      )
 
         .catch(
+
           () =>
             caches.match(
               event.request
             )
+
         )
 
     );
 
   }
+
 );
