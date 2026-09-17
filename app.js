@@ -522,7 +522,7 @@ async function signUp() {
 
   /* =====================================================
      CREATE PROFILE
-     
+
      We keep this compatible with the
      current profiles structure.
   ====================================================== */
@@ -912,6 +912,7 @@ async function logout() {
       error
     );
 
+
     toast(
       error.message
     );
@@ -1074,7 +1075,7 @@ function route(name) {
     !== name
   ) {
 
-    history.pushState(
+    window.history.pushState(
       null,
       '',
       `#${name}`
@@ -1858,9 +1859,15 @@ function setConnection() {
 
   if (!online) {
 
-    $('#camera-status')
-      ?.textContent =
-      'Offline · deteksi AI membutuhkan koneksi';
+    const cameraStatus =
+      $('#camera-status');
+
+    if (cameraStatus) {
+
+      cameraStatus.textContent =
+        'Offline · deteksi AI membutuhkan koneksi';
+
+    }
 
   }
 
@@ -2177,6 +2184,7 @@ function setupTrainingUpload() {
 
             event.preventDefault();
 
+
             dropZone.classList.add(
               'drag'
             );
@@ -2206,6 +2214,7 @@ function setupTrainingUpload() {
           event => {
 
             event.preventDefault();
+
 
             dropZone.classList.remove(
               'drag'
@@ -2659,8 +2668,7 @@ document.addEventListener(
     ==================================================== */
 
     if (
-      'serviceWorker'
-      in navigator
+      'serviceWorker' in navigator
     ) {
 
       window.addEventListener(
