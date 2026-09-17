@@ -1,1562 +1,1513 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0e302d" />
-    <meta
-      name="description"
-      content="AIKON — verifikasi aset proyek berbasis AI."
-    />
 
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=4" />
+<head>
 
-    <title>AIKON — AI Konstruksi</title>
-  </head>
+  <meta charset="UTF-8">
 
-  <body>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-    <!-- =========================================================
-         APPLICATION
-    ========================================================== -->
+  <meta
+    name="theme-color"
+    content="#0e302d"
+  >
 
-    <main class="app-shell" id="app-shell">
+  <meta
+    name="description"
+    content="AIKON — AI Konstruksi"
+  >
 
-      <!-- =======================================================
-           SIDEBAR
-      ======================================================== -->
+  <title>
+    AIKON — AI Konstruksi
+  </title>
 
-      <aside class="sidebar" aria-label="Navigasi utama">
 
-        <a
-          class="brand"
-          href="#dashboard"
-          data-route="dashboard"
-          aria-label="AIKON, ke beranda"
+  <link
+    rel="manifest"
+    href="./manifest.webmanifest"
+  >
+
+  <link
+    rel="stylesheet"
+    href="./style.css"
+  >
+
+</head>
+
+
+<body>
+
+
+  <!-- =====================================================
+       AUTHENTICATION
+  ====================================================== -->
+
+  <section
+    id="login-view"
+    class="auth-view"
+  >
+
+    <div class="auth-card">
+
+
+      <div class="auth-brand">
+
+        <div class="auth-brand-mark">
+          A
+        </div>
+
+        <div>
+
+          <strong>
+            AIKON
+          </strong>
+
+          <small>
+            AI Konstruksi
+          </small>
+
+        </div>
+
+      </div>
+
+
+      <div class="auth-heading">
+
+        <span class="eyebrow">
+          AKSES SISTEM
+        </span>
+
+        <h1>
+          Masuk ke AIKON
+        </h1>
+
+        <p>
+          Gunakan akun Anda untuk mengakses sistem verifikasi aset.
+        </p>
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="login-email">
+          Email
+        </label>
+
+        <input
+          id="login-email"
+          type="email"
+          autocomplete="email"
+          placeholder="nama@email.com"
         >
-          <span class="brand-mark">A</span>
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="login-password">
+          Password
+        </label>
+
+        <input
+          id="login-password"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Masukkan password"
+        >
+
+      </div>
+
+
+      <button
+        id="login-button"
+        class="primary-button"
+        type="button"
+      >
+        Masuk
+      </button>
+
+
+      <p class="auth-switch">
+
+        Belum punya akun?
+
+        <button
+          id="show-signup"
+          class="text-button"
+          type="button"
+        >
+          Buat akun
+        </button>
+
+      </p>
+
+
+    </div>
+
+  </section>
+
+
+
+  <!-- =====================================================
+       SIGN UP
+  ====================================================== -->
+
+  <section
+    id="signup-view"
+    class="auth-view hidden"
+  >
+
+    <div class="auth-card">
+
+
+      <div class="auth-brand">
+
+        <div class="auth-brand-mark">
+          A
+        </div>
+
+        <div>
+
+          <strong>
+            AIKON
+          </strong>
+
+          <small>
+            AI Konstruksi
+          </small>
+
+        </div>
+
+      </div>
+
+
+      <div class="auth-heading">
+
+        <span class="eyebrow">
+          REGISTRASI
+        </span>
+
+        <h1>
+          Buat akun AIKON
+        </h1>
+
+        <p>
+          Daftarkan akun untuk menggunakan sistem AIKON.
+        </p>
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="signup-name">
+          Nama lengkap
+        </label>
+
+        <input
+          id="signup-name"
+          type="text"
+          autocomplete="name"
+          placeholder="Nama lengkap"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="signup-username">
+          Username
+        </label>
+
+        <input
+          id="signup-username"
+          type="text"
+          autocomplete="username"
+          placeholder="username"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="signup-email">
+          Email
+        </label>
+
+        <input
+          id="signup-email"
+          type="email"
+          autocomplete="email"
+          placeholder="nama@email.com"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="signup-password">
+          Password
+        </label>
+
+        <input
+          id="signup-password"
+          type="password"
+          autocomplete="new-password"
+          placeholder="Minimal 6 karakter"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label for="signup-role">
+          Role
+        </label>
+
+        <select id="signup-role">
+
+          <option value="">
+            Pilih role
+          </option>
+
+          <option value="Field User">
+            Field User
+          </option>
+
+          <option value="Supervisor">
+            Supervisor
+          </option>
+
+          <option value="QA/QC">
+            QA/QC
+          </option>
+
+          <option value="Project Manager">
+            Project Manager
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <button
+        id="signup-button"
+        class="primary-button"
+        type="button"
+      >
+        Buat akun
+      </button>
+
+
+      <p class="auth-switch">
+
+        Sudah punya akun?
+
+        <button
+          id="show-login"
+          class="text-button"
+          type="button"
+        >
+          Kembali ke login
+        </button>
+
+      </p>
+
+
+    </div>
+
+  </section>
+
+
+
+  <!-- =====================================================
+       APPLICATION
+  ====================================================== -->
+
+  <main
+    id="app-shell"
+    class="app-shell hidden"
+  >
+
+
+    <!-- ===================================================
+         SIDEBAR
+    ==================================================== -->
+
+    <aside class="sidebar">
+
+
+      <div class="sidebar-brand">
+
+        <div class="brand-mark">
+          A
+        </div>
+
+        <div>
+
+          <strong>
+            AIKON
+          </strong>
+
+          <small>
+            AI Konstruksi
+          </small>
+
+        </div>
+
+      </div>
+
+
+      <nav class="sidebar-nav">
+
+
+        <div class="nav-section">
 
           <span>
-            AIKON
-            <small>AI Konstruksi</small>
+            UTAMA
           </span>
-        </a>
 
-        <nav class="nav-list">
 
           <a
-            class="nav-link active"
             href="#dashboard"
+            class="nav-link"
             data-route="dashboard"
           >
-            <span class="nav-icon">⌂</span>
-            Beranda
+
+            <span class="nav-icon">
+              ◈
+            </span>
+
+            <span>
+              Beranda
+            </span>
+
           </a>
 
+
           <a
-            class="nav-link"
             href="#scan"
+            class="nav-link"
             data-route="scan"
           >
-            <span class="nav-icon">⌗</span>
-            Mulai Scan
+
+            <span class="nav-icon">
+              ◎
+            </span>
+
+            <span>
+              Verifikasi aset
+            </span>
+
           </a>
 
+
           <a
-            class="nav-link"
             href="#history"
+            class="nav-link"
             data-route="history"
           >
-            <span class="nav-icon">◷</span>
-            Riwayat Scan
+
+            <span class="nav-icon">
+              ≡
+            </span>
+
+            <span>
+              Riwayat scan
+            </span>
+
           </a>
 
+        </div>
+
+
+
+        <div class="nav-section">
+
+          <span>
+            DATA
+          </span>
+
+
           <a
-            class="nav-link"
             href="#training"
+            class="nav-link"
             data-route="training"
           >
-            <span class="nav-icon">⊕</span>
-            Data Training
+
+            <span class="nav-icon">
+              ◫
+            </span>
+
+            <span>
+              Data training
+            </span>
+
           </a>
+
 
           <a
-            class="nav-link"
             href="#catalog"
+            class="nav-link"
             data-route="catalog"
           >
-            <span class="nav-icon">▦</span>
-            Katalog Ruang
+
+            <span class="nav-icon">
+              ▦
+            </span>
+
+            <span>
+              Katalog ruang
+            </span>
+
           </a>
 
-        </nav>
+        </div>
 
 
-        <!-- USER PROFILE -->
+      </nav>
 
-        <div class="sidebar-footer">
 
-          <div
-            class="user-avatar"
+      <div class="sidebar-bottom">
+
+
+        <div class="connection-status">
+
+          <span
+            id="connection-dot"
+            class="connection-dot"
+          ></span>
+
+          <span id="connection-text">
+            Memeriksa koneksi...
+          </span>
+
+        </div>
+
+
+        <button
+          id="user-menu-button"
+          class="user-profile"
+          type="button"
+          aria-expanded="false"
+        >
+
+          <span
             id="user-avatar"
+            class="user-avatar"
           >
-            --
-          </div>
+            US
+          </span>
 
-          <div class="user-info">
+          <span class="user-copy">
+
             <strong id="user-name">
-              Loading...
+              User
             </strong>
 
             <small id="user-role">
               Field User
             </small>
-          </div>
+
+          </span>
+
+          <span class="user-arrow">
+            ⋮
+          </span>
+
+        </button>
+
+
+        <div
+          id="user-menu"
+          class="user-menu hidden"
+        >
 
           <button
-            class="more-button"
-            id="user-menu-button"
-            aria-label="Menu pengguna"
-            aria-expanded="false"
+            id="profile-button"
             type="button"
           >
-            •••
+            Profil
           </button>
 
-
-          <!-- USER DROPDOWN -->
-
-          <div
-            class="user-menu hidden"
-            id="user-menu"
+          <button
+            id="logout-button"
+            type="button"
           >
-
-            <button
-              type="button"
-              id="profile-button"
-            >
-              Profil
-            </button>
-
-            <button
-              type="button"
-              id="logout-button"
-            >
-              Logout
-            </button>
-
-          </div>
+            Logout
+          </button>
 
         </div>
 
-      </aside>
+
+      </div>
 
 
-      <!-- =======================================================
-           MAIN AREA
-      ======================================================== -->
+    </aside>
 
-      <section class="main-area">
 
-        <!-- TOPBAR -->
 
-        <header class="topbar">
+    <!-- ===================================================
+         MAIN CONTENT
+    ==================================================== -->
 
-          <button
-            class="mobile-menu"
-            aria-label="Buka menu"
-            type="button"
-          >
-            ☰
-          </button>
+    <div class="main-area">
 
-          <div
-            class="breadcrumb"
-            id="breadcrumb"
-          >
+
+      <!-- TOPBAR -->
+
+      <header class="topbar">
+
+
+        <button
+          class="mobile-menu"
+          type="button"
+          aria-label="Buka menu"
+        >
+          ☰
+        </button>
+
+
+        <div class="breadcrumbs">
+
+          <span>
+            AIKON
+          </span>
+
+          <span>
+            /
+          </span>
+
+          <strong id="breadcrumb">
             Beranda
-          </div>
+          </strong>
 
-          <div class="connection">
+        </div>
 
-            <span id="connection-dot"></span>
 
-            <span id="connection-text">
-              Online · tersinkron
-            </span>
+        <div class="topbar-status">
 
-          </div>
-
-          <button
-            class="notification"
-            aria-label="Notifikasi"
-            type="button"
+          <span
+            id="sync-state"
+            class="sync-state"
           >
-            ♧
-            <i></i>
-          </button>
+            Tersinkron
+          </span>
 
-        </header>
-
-
-        <!-- =====================================================
-             CONTENT
-        ====================================================== -->
-
-        <div class="content">
+        </div>
 
 
-          <!-- ===================================================
-               LOGIN
-          ==================================================== -->
-
-          <section
-            class="auth-view"
-            id="login-view"
-          >
-
-            <div class="auth-card">
-
-              <div class="auth-brand">
-
-                <span class="brand-mark">
-                  A
-                </span>
-
-                <div>
-                  <strong>
-                    AIKON
-                  </strong>
-
-                  <small>
-                    AI Konstruksi
-                  </small>
-                </div>
-
-              </div>
+      </header>
 
 
-              <p class="eyebrow">
-                AKSES SISTEM
-              </p>
 
-              <h1>
-                Masuk ke AIKON
+      <!-- =================================================
+           PAGE CONTENT
+      ================================================== -->
+
+      <div class="content">
+
+
+        <!-- =================================================
+             DASHBOARD
+        ================================================== -->
+
+        <section
+          id="dashboard"
+          class="view active"
+        >
+
+
+          <div class="page-header">
+
+            <div>
+
+              <span class="eyebrow">
+                DASHBOARD
+              </span>
+
+              <h1 id="dashboard-greeting">
+                Selamat pagi.
               </h1>
 
-              <p class="auth-description">
-                Gunakan akun Anda untuk mengakses sistem
-                verifikasi aset.
-              </p>
-
-
-              <!-- EMAIL -->
-
-              <label>
-                Email
-
-                <input
-                  type="email"
-                  id="login-email"
-                  placeholder="nama@email.com"
-                  autocomplete="email"
-                />
-
-              </label>
-
-
-              <!-- PASSWORD -->
-
-              <label>
-                Password
-
-                <input
-                  type="password"
-                  id="login-password"
-                  placeholder="••••••••"
-                  autocomplete="current-password"
-                />
-
-              </label>
-
-
-              <!-- LOGIN BUTTON -->
-
-              <button
-                class="primary-button wide"
-                id="login-button"
-                type="button"
-              >
-                Masuk
-              </button>
-
-
-              <!-- SIGN UP LINK -->
-
-              <p class="auth-switch">
-
-                Belum punya akun?
-
-                <button
-                  id="show-signup"
-                  type="button"
-                >
-                  Buat akun
-                </button>
-
+              <p>
+                Pantau proses verifikasi aset konstruksi Anda.
               </p>
 
             </div>
 
-          </section>
+
+            <button
+              id="show-catalog"
+              class="secondary-button"
+              type="button"
+            >
+              Lihat katalog
+            </button>
+
+          </div>
 
 
-          <!-- ===================================================
-               SIGN UP
-          ==================================================== -->
 
-          <section
-            class="auth-view hidden"
-            id="signup-view"
-          >
+          <div class="stats-grid">
 
-            <div class="auth-card">
 
-              <div class="auth-brand">
+            <article class="stat-card">
 
-                <span class="brand-mark">
-                  A
-                </span>
+              <span class="stat-label">
+                TOTAL SCAN
+              </span>
+
+              <strong id="scan-total">
+                24
+              </strong>
+
+              <small>
+                Scan tercatat
+              </small>
+
+            </article>
+
+
+            <article class="stat-card">
+
+              <span class="stat-label">
+                SESUAI KATALOG
+              </span>
+
+              <strong id="matched-total">
+                21
+              </strong>
+
+              <small>
+                Aset terverifikasi
+              </small>
+
+            </article>
+
+
+            <article class="stat-card">
+
+              <span class="stat-label">
+                STATUS DATA
+              </span>
+
+              <strong>
+                Aktif
+              </strong>
+
+              <small>
+                Sistem berjalan normal
+              </small>
+
+            </article>
+
+
+          </div>
+
+
+
+          <div class="dashboard-grid">
+
+
+            <section class="panel">
+
+              <div class="panel-header">
 
                 <div>
 
-                  <strong>
-                    AIKON
-                  </strong>
+                  <span class="eyebrow">
+                    AKTIVITAS
+                  </span>
 
-                  <small>
-                    AI Konstruksi
-                  </small>
+                  <h2>
+                    Scan terbaru
+                  </h2>
 
                 </div>
 
-              </div>
-
-
-              <p class="eyebrow">
-                REGISTRASI
-              </p>
-
-              <h1>
-                Buat akun AIKON
-              </h1>
-
-              <p class="auth-description">
-                Daftarkan akun untuk mulai menggunakan AIKON.
-              </p>
-
-
-              <!-- NAMA LENGKAP -->
-
-              <label>
-                Nama Lengkap
-
-                <input
-                  type="text"
-                  id="signup-name"
-                  placeholder="Nama lengkap"
-                  autocomplete="name"
-                />
-
-              </label>
-
-
-              <!-- USERNAME -->
-
-              <label>
-                Username
-
-                <input
-                  type="text"
-                  id="signup-username"
-                  placeholder="username"
-                  autocomplete="username"
-                />
-
-              </label>
-
-
-              <!-- EMAIL -->
-
-              <label>
-                Email
-
-                <input
-                  type="email"
-                  id="signup-email"
-                  placeholder="nama@email.com"
-                  autocomplete="email"
-                />
-
-              </label>
-
-
-              <!-- PASSWORD -->
-
-              <label>
-                Password
-
-                <input
-                  type="password"
-                  id="signup-password"
-                  placeholder="Minimal 6 karakter"
-                  autocomplete="new-password"
-                />
-
-              </label>
-
-
-              <!-- SIGN UP BUTTON -->
-
-              <button
-                class="primary-button wide"
-                id="signup-button"
-                type="button"
-              >
-                Buat Akun
-              </button>
-
-
-              <!-- LOGIN LINK -->
-
-              <p class="auth-switch">
-
-                Sudah punya akun?
 
                 <button
-                  id="show-login"
+                  class="text-button"
                   type="button"
+                  onclick="route('history')"
                 >
-                  Masuk
+                  Lihat semua
                 </button>
-
-              </p>
-
-            </div>
-
-          </section>
-
-
-          <!-- ===================================================
-               DASHBOARD
-          ==================================================== -->
-
-          <section
-            class="view"
-            id="dashboard"
-          >
-
-            <div class="page-heading">
-
-              <div>
-
-                <p class="eyebrow">
-                  Jumat, 11 September 2026
-                </p>
-
-                <h1 id="dashboard-greeting">
-                  Selamat pagi.
-                </h1>
-
-                <p>
-                  Semua aset di lapangan, dalam satu pandangan.
-                </p>
 
               </div>
 
 
-              <a
+              <div
+                id="activity-list"
+                class="activity-list"
+              ></div>
+
+
+            </section>
+
+
+
+            <section class="panel dashboard-action">
+
+              <span class="eyebrow">
+                VERIFIKASI
+              </span>
+
+              <h2>
+                Verifikasi aset
+              </h2>
+
+              <p>
+                Gunakan kamera untuk mengenali aset dan mencocokkannya dengan katalog.
+              </p>
+
+              <button
                 class="primary-button"
-                href="#scan"
-                data-route="scan"
+                type="button"
+                onclick="route('scan')"
               >
                 Mulai scan
+              </button>
 
-                <span>
-                  →
-                </span>
-
-              </a>
-
-            </div>
+            </section>
 
 
-            <!-- STATISTICS -->
-
-            <div class="stat-grid">
-
-              <article class="stat-card">
-
-                <div class="stat-icon teal">
-                  ⌗
-                </div>
-
-                <div>
-
-                  <span>
-                    Scan hari ini
-                  </span>
-
-                  <strong id="scan-total">
-                    24
-                  </strong>
-
-                  <em>
-                    ↑ 12% dari kemarin
-                  </em>
-
-                </div>
-
-              </article>
+          </div>
 
 
-              <article class="stat-card">
-
-                <div class="stat-icon green">
-                  ✓
-                </div>
-
-                <div>
-
-                  <span>
-                    Sesuai katalog
-                  </span>
-
-                  <strong id="matched-total">
-                    21
-                  </strong>
-
-                  <em>
-                    87.5% akurasi verifikasi
-                  </em>
-
-                </div>
-
-              </article>
+        </section>
 
 
-              <article class="stat-card">
 
-                <div class="stat-icon amber">
-                  !
-                </div>
+        <!-- =================================================
+             SCAN
+        ================================================== -->
 
-                <div>
-
-                  <span>
-                    Perlu ditinjau
-                  </span>
-
-                  <strong id="review-total">
-                    3
-                  </strong>
-
-                  <em class="muted-em">
-                    Butuh perhatian admin
-                  </em>
-
-                </div>
-
-              </article>
+        <section
+          id="scan"
+          class="view"
+        >
 
 
-              <article class="stat-card">
+          <div class="page-header">
 
-                <div class="stat-icon slate">
-                  ↥
-                </div>
+            <div>
 
-                <div>
+              <span class="eyebrow">
+                VERIFIKASI ASET
+              </span>
 
-                  <span>
-                    Menunggu sync
-                  </span>
+              <h1>
+                Scan aset
+              </h1>
 
-                  <strong id="pending-total">
-                    0
-                  </strong>
-
-                  <em class="muted-em">
-                    Semua data sudah aman
-                  </em>
-
-                </div>
-
-              </article>
+              <p>
+                Gunakan kamera untuk mendeteksi aset konstruksi.
+              </p>
 
             </div>
 
-
-            <!-- DASHBOARD GRID -->
-
-            <div class="dashboard-grid">
+          </div>
 
 
-              <!-- ACTIVITY -->
 
-              <article class="panel activity-panel">
+          <div class="scan-layout">
 
-                <div class="panel-head">
 
-                  <div>
+            <section class="panel camera-panel">
 
-                    <h2>
-                      Aktivitas terbaru
-                    </h2>
 
-                    <p>
-                      Hasil scan dari proyek aktif
-                    </p>
+              <div class="panel-header">
 
+                <div>
+
+                  <span class="eyebrow">
+                    CAMERA
+                  </span>
+
+                  <h2>
+                    Kamera lapangan
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div
+                id="camera-feed"
+                class="camera-feed"
+              >
+
+                <video
+                  id="camera-video"
+                  autoplay
+                  muted
+                  playsinline
+                ></video>
+
+
+                <div
+                  id="camera-placeholder"
+                  class="camera-placeholder"
+                >
+
+                  <div class="camera-placeholder-icon">
+                    ◎
                   </div>
 
-                  <a
-                    href="#history"
-                    data-route="history"
-                  >
-                    Lihat semua
-                  </a>
+                  <strong>
+                    Kamera belum aktif
+                  </strong>
+
+                  <small>
+                    Aktifkan kamera untuk mulai melakukan scan.
+                  </small>
 
                 </div>
 
 
                 <div
-                  class="activity-list"
-                  id="activity-list"
+                  id="detection-box"
+                  class="detection-box hidden"
+                >
+
+                  <span>
+                    ASET
+                  </span>
+
+                </div>
+
+
+                <div
+                  id="scanline"
+                  class="scanline hidden"
                 ></div>
 
-              </article>
+              </div>
 
 
-              <!-- PROJECT -->
+              <div class="camera-controls">
 
-              <article class="panel project-panel">
+                <button
+                  id="camera-button"
+                  class="secondary-button"
+                  type="button"
+                >
+                  Aktifkan kamera
+                </button>
 
-                <div class="panel-head">
+                <button
+                  id="detect-button"
+                  class="primary-button disabled"
+                  type="button"
+                  disabled
+                >
+                  Deteksi aset
+                </button>
+
+              </div>
+
+
+              <div
+                id="camera-status"
+                class="camera-status"
+              >
+                Kamera belum aktif
+              </div>
+
+
+            </section>
+
+
+
+            <section class="panel result-panel">
+
+
+              <div class="panel-header">
+
+                <div>
+
+                  <span class="eyebrow">
+                    HASIL
+                  </span>
+
+                  <h2>
+                    Hasil verifikasi
+                  </h2>
+
+                </div>
+
+              </div>
+
+
+              <div
+                id="result-empty"
+                class="result-empty"
+              >
+
+                <div>
+                  ◎
+                </div>
+
+                <strong>
+                  Belum ada hasil
+                </strong>
+
+                <small>
+                  Aktifkan kamera dan jalankan deteksi.
+                </small>
+
+              </div>
+
+
+              <div
+                id="result-found"
+                class="result-found hidden"
+              >
+
+                <div class="result-icon">
+                  ▰
+                </div>
+
+
+                <div class="result-main">
+
+                  <span class="result-label">
+                    OBJEK TERDETEKSI
+                  </span>
+
+                  <h3>
+                    Monitor LED
+                  </h3>
+
+                  <p>
+                    Sesuai dengan aset yang terdaftar pada katalog.
+                  </p>
+
+                </div>
+
+
+                <div class="confidence">
+
+                  <span>
+                    KEYAKINAN
+                  </span>
+
+                  <strong>
+                    94%
+                  </strong>
+
+                </div>
+
+
+                <div class="result-meta">
 
                   <div>
 
-                    <h2>
-                      Proyek aktif
-                    </h2>
+                    <small>
+                      Waktu
+                    </small>
 
-                    <p>
-                      Pilih ruang sebelum mulai scan
-                    </p>
+                    <strong id="scan-time">
+                      --
+                    </strong>
+
+                  </div>
+
+
+                  <div>
+
+                    <small>
+                      Lokasi
+                    </small>
+
+                    <select id="room-select">
+
+                      <option>
+                        Ruang Meeting 12A
+                      </option>
+
+                      <option>
+                        Ruang Server 12B
+                      </option>
+
+                      <option>
+                        Ruang Operasional
+                      </option>
+
+                      <option>
+                        Gudang
+                      </option>
+
+                    </select>
 
                   </div>
 
                 </div>
 
 
-                <div class="project-card">
+                <button
+                  id="save-result"
+                  class="primary-button"
+                  type="button"
+                >
+                  Simpan hasil
+                </button>
 
-                  <div class="project-visual">
-                    <span>✦</span>
-                  </div>
 
-                  <div class="project-info">
+              </div>
 
-                    <span class="pill teal-pill">
-                      AKTIF
-                    </span>
 
-                    <h3>
-                      Menara Cakrawala
-                    </h3>
+            </section>
 
-                    <p>
-                      Jakarta Selatan · 3 gedung
-                    </p>
 
-                    <div class="progress-row">
+          </div>
 
-                      <span>
-                        126 dari 180 ruang terverifikasi
-                      </span>
 
-                      <strong>
-                        70%
-                      </strong>
+        </section>
 
-                    </div>
 
-                    <div class="progress">
-                      <i></i>
-                    </div>
 
-                    <a
-                      href="#scan"
-                      data-route="scan"
-                    >
-                      Lanjutkan verifikasi →
-                    </a>
+        <!-- =================================================
+             HISTORY
+        ================================================== -->
 
-                  </div>
+        <section
+          id="history"
+          class="view"
+        >
 
-                </div>
 
-              </article>
+          <div class="page-header">
+
+            <div>
+
+              <span class="eyebrow">
+                RIWAYAT
+              </span>
+
+              <h1>
+                Riwayat scan
+              </h1>
+
+              <p>
+                Seluruh hasil verifikasi aset yang tersimpan.
+              </p>
 
             </div>
+
+
+            <button
+              id="export-button"
+              class="secondary-button"
+              type="button"
+            >
+              Export CSV
+            </button>
+
+          </div>
+
+
+
+          <section class="panel">
+
+
+            <div class="filter-bar">
+
+
+              <div class="search-field">
+
+                <span>
+                  ⌕
+                </span>
+
+                <input
+                  id="history-search"
+                  type="search"
+                  placeholder="Cari aset atau lokasi..."
+                >
+
+              </div>
+
+
+              <select id="status-filter">
+
+                <option value="all">
+                  Semua status
+                </option>
+
+                <option value="matched">
+                  Sesuai katalog
+                </option>
+
+                <option value="review">
+                  Perlu ditinjau
+                </option>
+
+              </select>
+
+
+            </div>
+
+
+
+            <div class="table-wrapper">
+
+              <table>
+
+                <thead>
+
+                  <tr>
+
+                    <th>
+                      Barang
+                    </th>
+
+                    <th>
+                      Lokasi
+                    </th>
+
+                    <th>
+                      Waktu
+                    </th>
+
+                    <th>
+                      Status
+                    </th>
+
+                    <th>
+                      Sinkronisasi
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody
+                  id="history-body"
+                ></tbody>
+
+              </table>
+
+            </div>
+
 
           </section>
 
 
-          <!-- ===================================================
-               SCAN
-          ==================================================== -->
+        </section>
 
-          <section
-            class="view"
-            id="scan"
-          >
 
-            <div class="page-heading compact">
+
+        <!-- =================================================
+             TRAINING
+        ================================================== -->
+
+        <section
+          id="training"
+          class="view"
+        >
+
+
+          <div class="page-header">
+
+            <div>
+
+              <span class="eyebrow">
+                DATA TRAINING
+              </span>
+
+              <h1>
+                Data training
+              </h1>
+
+              <p>
+                Tambahkan data gambar untuk membantu pengembangan model AI.
+              </p>
+
+            </div>
+
+          </div>
+
+
+
+          <section class="panel training-panel">
+
+
+            <div class="panel-header">
 
               <div>
 
-                <p class="eyebrow">
-                  VERIFIKASI ASET
-                </p>
+                <span class="eyebrow">
+                  DATASET
+                </span>
 
-                <h1>
-                  Mulai scan barang
-                </h1>
-
-                <p>
-                  Pilih lokasi aktif, lalu arahkan kamera ke barang.
-                </p>
+                <h2>
+                  Tambahkan data
+                </h2>
 
               </div>
 
-              <span class="help-chip">
-                ? Panduan scan
+            </div>
+
+
+            <div class="choice-grid">
+
+
+              <button
+                class="choice active"
+                type="button"
+                data-training="existing"
+              >
+
+                <strong>
+                  Kategori existing
+                </strong>
+
+                <small>
+                  Tambahkan foto untuk aset yang sudah tersedia.
+                </small>
+
+              </button>
+
+
+              <button
+                class="choice"
+                type="button"
+                data-training="new"
+              >
+
+                <strong>
+                  Kategori baru
+                </strong>
+
+                <small>
+                  Buat kategori aset baru untuk training.
+                </small>
+
+              </button>
+
+
+            </div>
+
+
+
+            <div
+              id="training-category-wrap"
+              class="field"
+            >
+
+              <label for="training-category">
+                Kategori aset
+              </label>
+
+              <select id="training-category">
+
+                <option>
+                  Monitor LED
+                </option>
+
+                <option>
+                  Kursi kantor
+                </option>
+
+                <option>
+                  Meja rapat
+                </option>
+
+                <option>
+                  AC split
+                </option>
+
+                <option>
+                  Proyektor
+                </option>
+
+                <option>
+                  Whiteboard
+                </option>
+
+                <option>
+                  Lemari arsip
+                </option>
+
+                <option>
+                  APAR
+                </option>
+
+              </select>
+
+            </div>
+
+
+
+            <div
+              id="new-category-wrap"
+              class="field hidden"
+            >
+
+              <label for="new-category">
+                Nama kategori baru
+              </label>
+
+              <input
+                id="new-category"
+                type="text"
+                placeholder="Contoh: Panel listrik"
+              >
+
+            </div>
+
+
+
+            <div
+              id="drop-zone"
+              class="drop-zone"
+            >
+
+              <input
+                id="photo-input"
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+              >
+
+
+              <div class="drop-icon">
+                ↑
+              </div>
+
+              <strong>
+                Pilih atau tarik foto ke sini
+              </strong>
+
+              <small>
+                Minimal 5 foto direkomendasikan.
+              </small>
+
+              <span id="photo-count">
+                Belum ada foto dipilih
               </span>
 
             </div>
 
 
-            <div class="scan-layout">
 
+            <button
+              id="submit-training"
+              class="primary-button"
+              type="button"
+            >
+              Kirim data training
+            </button>
 
-              <!-- LOCATION -->
-
-              <section class="panel location-panel">
-
-                <div class="panel-head">
-
-                  <div>
-
-                    <h2>
-                      Lokasi scan
-                    </h2>
-
-                    <p>
-                      Katalog akan menyesuaikan lokasi ini
-                    </p>
-
-                  </div>
-
-                  <span class="step-badge">
-                    1
-                  </span>
-
-                </div>
-
-
-                <label>
-                  Proyek
-
-                  <select id="project-select">
-                    <option>
-                      Menara Cakrawala
-                    </option>
-                  </select>
-
-                </label>
-
-
-                <div class="field-row">
-
-                  <label>
-                    Gedung
-
-                    <select id="building-select">
-                      <option>
-                        Gedung A
-                      </option>
-                    </select>
-
-                  </label>
-
-
-                  <label>
-                    Lantai
-
-                    <select id="floor-select">
-                      <option>
-                        Lantai 12
-                      </option>
-                    </select>
-
-                  </label>
-
-                </div>
-
-
-                <label>
-                  Ruang
-
-                  <select id="room-select">
-
-                    <option>
-                      Ruang Meeting 12A
-                    </option>
-
-                    <option>
-                      Ruang Server 12B
-                    </option>
-
-                    <option>
-                      Pantry 12C
-                    </option>
-
-                  </select>
-
-                </label>
-
-
-                <div class="catalog-preview">
-
-                  <span>
-                    ☷
-                  </span>
-
-                  <div>
-
-                    <strong id="catalog-count">
-                      8 item
-                    </strong>
-
-                    <small>
-                      terdaftar dalam katalog ruang
-                    </small>
-
-                  </div>
-
-                  <button
-                    id="show-catalog"
-                    type="button"
-                  >
-                    Lihat
-                  </button>
-
-                </div>
-
-              </section>
-
-
-              <!-- CAMERA -->
-
-              <section class="panel camera-panel">
-
-                <div class="panel-head">
-
-                  <div>
-
-                    <h2>
-                      Kamera
-                    </h2>
-
-                    <p id="camera-status">
-                      Siap memulai deteksi
-                    </p>
-
-                  </div>
-
-                  <span class="step-badge">
-                    2
-                  </span>
-
-                </div>
-
-
-                <div
-                  class="camera-feed"
-                  id="camera-feed"
-                >
-
-                  <video
-                    id="camera-video"
-                    autoplay
-                    muted
-                    playsinline
-                  ></video>
-
-
-                  <div
-                    class="camera-placeholder"
-                    id="camera-placeholder"
-                  >
-
-                    <span class="camera-icon">
-                      ⌗
-                    </span>
-
-                    <strong>
-                      Aktifkan kamera
-                    </strong>
-
-                    <p>
-                      Pastikan barang terlihat jelas dalam frame
-                    </p>
-
-                  </div>
-
-
-                  <div
-                    class="detection-box hidden"
-                    id="detection-box"
-                  >
-
-                    <span>
-                      Monitor LED · 94%
-                    </span>
-
-                  </div>
-
-
-                  <div
-                    class="scanline hidden"
-                    id="scanline"
-                  ></div>
-
-                </div>
-
-
-                <div class="camera-actions">
-
-                  <button
-                    class="secondary-button"
-                    id="camera-button"
-                    type="button"
-                  >
-                    Aktifkan kamera
-                  </button>
-
-                  <button
-                    class="primary-button disabled"
-                    id="detect-button"
-                    disabled
-                    type="button"
-                  >
-                    Deteksi barang
-
-                    <span>
-                      →
-                    </span>
-
-                  </button>
-
-                </div>
-
-              </section>
-
-
-              <!-- DETECTION RESULT -->
-
-              <aside class="panel scan-result">
-
-                <div class="panel-head">
-
-                  <div>
-
-                    <h2>
-                      Hasil deteksi
-                    </h2>
-
-                    <p>
-                      Update setiap 1 detik
-                    </p>
-
-                  </div>
-
-                  <span class="step-badge">
-                    3
-                  </span>
-
-                </div>
-
-
-                <div
-                  id="result-empty"
-                  class="result-empty"
-                >
-
-                  <span>
-                    ◇
-                  </span>
-
-                  <strong>
-                    Belum ada deteksi
-                  </strong>
-
-                  <p>
-                    Hasil verifikasi akan muncul di sini.
-                  </p>
-
-                </div>
-
-
-                <div
-                  id="result-found"
-                  class="result-found hidden"
-                >
-
-                  <div class="result-status success">
-
-                    <span>
-                      ✓
-                    </span>
-
-                    <div>
-
-                      <strong>
-                        Sesuai katalog
-                      </strong>
-
-                      <p>
-                        Barang ini terdaftar di ruang aktif
-                      </p>
-
-                    </div>
-
-                  </div>
-
-
-                  <div class="detected-item">
-
-                    <div class="item-thumb monitor-thumb">
-                      ▰
-                    </div>
-
-                    <div>
-
-                      <span>
-                        TERDETEKSI
-                      </span>
-
-                      <h3 id="detected-name">
-                        Monitor LED
-                      </h3>
-
-                      <p id="detected-confidence">
-                        Keyakinan AI · 94%
-                      </p>
-
-                    </div>
-
-                  </div>
-
-
-                  <div class="result-meta">
-
-                    <div>
-
-                      <span>
-                        Waktu scan
-                      </span>
-
-                      <strong id="scan-time">
-                        —
-                      </strong>
-
-                    </div>
-
-                    <div>
-
-                      <span>
-                        Status data
-                      </span>
-
-                      <strong id="sync-state">
-                        Tersinkron
-                      </strong>
-
-                    </div>
-
-                  </div>
-
-
-                  <button
-                    class="wide-button"
-                    id="save-result"
-                    type="button"
-                  >
-                    Simpan hasil scan
-                  </button>
-
-                </div>
-
-
-                <div class="tip-box">
-
-                  <strong>
-                    Tip scan yang baik
-                  </strong>
-
-                  <p>
-                    Arahkan kamera dari jarak 0,5–1,5 m.
-                    Hindari pantulan cahaya dan objek yang tertutup.
-                  </p>
-
-                </div>
-
-              </aside>
-
-            </div>
 
           </section>
 
 
-          <!-- ===================================================
-               HISTORY
-          ==================================================== -->
+        </section>
 
-          <section
-            class="view"
-            id="history"
-          >
 
-            <div class="page-heading compact">
 
-              <div>
+        <!-- =================================================
+             CATALOG
+        ================================================== -->
 
-                <p class="eyebrow">
-                  ARSIP VERIFIKASI
-                </p>
+        <section
+          id="catalog"
+          class="view"
+        >
 
-                <h1>
-                  Riwayat scan
-                </h1>
 
-                <p>
-                  Semua hasil tersimpan di perangkat dan
-                  tersinkron saat online.
-                </p>
+          <div class="page-header">
 
-              </div>
+            <div>
 
-              <button
-                class="secondary-button"
-                id="export-button"
-                type="button"
-              >
-                ⇩ Export CSV
-              </button>
+              <span class="eyebrow">
+                KATALOG
+              </span>
+
+              <h1>
+                Katalog ruang
+              </h1>
+
+              <p>
+                Daftar aset yang terdaftar pada sistem.
+              </p>
 
             </div>
 
 
-            <article class="panel table-panel">
+            <button
+              id="catalog-location"
+              class="primary-button"
+              type="button"
+            >
+              Scan aset
+            </button>
 
-              <div class="filter-bar">
+          </div>
 
-                <input
-                  id="history-search"
-                  placeholder="Cari barang atau ruang..."
-                />
 
-                <select id="status-filter">
 
-                  <option value="all">
-                    Semua status
-                  </option>
+          <div
+            id="catalog-grid"
+            class="catalog-grid"
+          ></div>
 
-                  <option value="matched">
-                    Sesuai katalog
-                  </option>
 
-                  <option value="review">
-                    Perlu ditinjau
-                  </option>
+        </section>
 
-                </select>
 
-              </div>
+      </div>
 
 
-              <div class="table-wrap">
+    </div>
 
-                <table>
 
-                  <thead>
+  </main>
 
-                    <tr>
 
-                      <th>
-                        BARANG
-                      </th>
 
-                      <th>
-                        LOKASI
-                      </th>
+  <!-- =====================================================
+       TOAST
+  ====================================================== -->
 
-                      <th>
-                        WAKTU
-                      </th>
+  <div
+    id="toast"
+    class="toast hidden"
+  ></div>
 
-                      <th>
-                        STATUS
-                      </th>
 
-                      <th>
-                        SYNC
-                      </th>
 
-                    </tr>
+  <!-- =====================================================
+       SUPABASE
+  ====================================================== -->
 
-                  </thead>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-                  <tbody id="history-body"></tbody>
 
-                </table>
+  <!-- =====================================================
+       APPLICATION
+  ====================================================== -->
 
-              </div>
+  <script src="./app.js"></script>
 
-            </article>
 
-          </section>
+</body>
 
-
-          <!-- ===================================================
-               TRAINING
-          ==================================================== -->
-
-          <section
-            class="view"
-            id="training"
-          >
-
-            <div class="page-heading compact">
-
-              <div>
-
-                <p class="eyebrow">
-                  KONTRIBUSI MODEL
-                </p>
-
-                <h1>
-                  Tambah data training
-                </h1>
-
-                <p>
-                  Bantu tingkatkan akurasi AIKON dengan foto
-                  yang representatif.
-                </p>
-
-              </div>
-
-            </div>
-
-
-            <div class="training-layout">
-
-
-              <article class="panel upload-panel">
-
-                <div class="panel-head">
-
-                  <div>
-
-                    <h2>
-                      Usulkan data
-                    </h2>
-
-                    <p>
-                      Foto akan direview sebelum masuk batch training.
-                    </p>
-
-                  </div>
-
-                </div>
-
-
-                <div class="choice-row">
-
-                  <button
-                    class="choice active"
-                    data-training="existing"
-                    type="button"
-                  >
-                    Kategori yang ada
-                  </button>
-
-                  <button
-                    class="choice"
-                    data-training="new"
-                    type="button"
-                  >
-                    Kategori baru
-                  </button>
-
-                </div>
-
-
-                <label id="training-category-wrap">
-
-                  Kategori barang
-
-                  <select>
-
-                    <option>
-                      Monitor LED
-                    </option>
-
-                    <option>
-                      Kursi kantor
-                    </option>
-
-                    <option>
-                      Meja rapat
-                    </option>
-
-                    <option>
-                      AC split
-                    </option>
-
-                  </select>
-
-                </label>
-
-
-                <label
-                  id="new-category-wrap"
-                  class="hidden"
-                >
-
-                  Nama kategori baru
-
-                  <input
-                    placeholder="Contoh: Proyektor ceiling"
-                  />
-
-                </label>
-
-
-                <label>
-
-                  Deskripsi singkat
-
-                  <textarea
-                    placeholder="Ciri barang atau konteks penggunaannya..."
-                  ></textarea>
-
-                </label>
-
-
-                <div
-                  class="drop-zone"
-                  id="drop-zone"
-                >
-
-                  <span>
-                    ↑
-                  </span>
-
-                  <strong>
-                    Unggah foto barang
-                  </strong>
-
-                  <p>
-                    Seret foto ke sini atau
-                    <u>pilih dari perangkat</u>
-                  </p>
-
-                  <small>
-                    Minimal 5 foto · JPG, PNG hingga 10 MB
-                  </small>
-
-                  <input
-                    type="file"
-                    id="photo-input"
-                    accept="image/*"
-                    multiple
-                    hidden
-                  />
-
-                </div>
-
-
-                <div
-                  class="photo-count"
-                  id="photo-count"
-                >
-                  Belum ada foto dipilih
-                </div>
-
-
-                <button
-                  class="primary-button wide"
-                  id="submit-training"
-                  type="button"
-                >
-                  Kirim untuk review
-
-                  <span>
-                    →
-                  </span>
-
-                </button>
-
-              </article>
-
-
-              <aside class="panel guide-panel">
-
-                <span class="guide-number">
-                  5–10
-                </span>
-
-                <h2>
-                  Foto per kategori
-                </h2>
-
-                <p>
-                  Semakin bervariasi, semakin siap model
-                  mengenali barang di lapangan.
-                </p>
-
-
-                <ol>
-
-                  <li>
-                    Ambil dari depan & samping
-                  </li>
-
-                  <li>
-                    Variasikan jarak dekat & jauh
-                  </li>
-
-                  <li>
-                    Coba pencahayaan berbeda
-                  </li>
-
-                  <li>
-                    Pastikan barang tidak tertutup
-                  </li>
-
-                </ol>
-
-
-                <div class="review-note">
-
-                  <span>
-                    ◷
-                  </span>
-
-                  <p>
-                    Data biasanya direview admin
-                    dalam 1–3 hari kerja.
-                  </p>
-
-                </div>
-
-              </aside>
-
-            </div>
-
-          </section>
-
-
-          <!-- ===================================================
-               CATALOG
-          ==================================================== -->
-
-          <section
-            class="view"
-            id="catalog"
-          >
-
-            <div class="page-heading compact">
-
-              <div>
-
-                <p class="eyebrow">
-                  REFERENSI RUANG
-                </p>
-
-                <h1>
-                  Katalog Ruang Meeting 12A
-                </h1>
-
-                <p>
-                  8 kategori barang yang diharapkan ada
-                  di lokasi ini.
-                </p>
-
-              </div>
-
-              <button
-                class="secondary-button"
-                id="catalog-location"
-                type="button"
-              >
-                ⌖ Ganti lokasi
-              </button>
-
-            </div>
-
-
-            <div
-              class="catalog-grid"
-              id="catalog-grid"
-            ></div>
-
-          </section>
-
-
-        </div>
-
-      </section>
-
-    </main>
-
-
-    <!-- =========================================================
-         TOAST
-    ========================================================== -->
-
-    <div
-      class="toast hidden"
-      id="toast"
-    ></div>
-
-
-    <!-- =========================================================
-         SUPABASE
-    ========================================================== -->
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-
-    <!-- =========================================================
-         AIKON APP
-    ========================================================== -->
-
-    <script src="./app.js?v=4"></script>
-
-  </body>
 </html>
