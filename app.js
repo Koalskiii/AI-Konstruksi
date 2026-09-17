@@ -14,6 +14,7 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
   'sb_publishable_OGJgtLKCNAupcWLGqRM52w_rP2hyq7h';
 
+
 const supabaseClient =
   window.supabase.createClient(
     SUPABASE_URL,
@@ -77,14 +78,53 @@ const initialHistory = [
 
 const catalog = [
 
-  ['Monitor LED', '3 unit terdaftar', '▰'],
-  ['Kursi kantor', '12 unit terdaftar', '♙'],
-  ['Meja rapat', '1 unit terdaftar', '▱'],
-  ['AC split', '2 unit terdaftar', '≋'],
-  ['Proyektor', '1 unit terdaftar', '◫'],
-  ['Whiteboard', '1 unit terdaftar', '▯'],
-  ['Lemari arsip', '2 unit terdaftar', '▥'],
-  ['APAR', '1 unit terdaftar', '◉']
+  [
+    'Monitor LED',
+    '3 unit terdaftar',
+    '▰'
+  ],
+
+  [
+    'Kursi kantor',
+    '12 unit terdaftar',
+    '♙'
+  ],
+
+  [
+    'Meja rapat',
+    '1 unit terdaftar',
+    '▱'
+  ],
+
+  [
+    'AC split',
+    '2 unit terdaftar',
+    '≋'
+  ],
+
+  [
+    'Proyektor',
+    '1 unit terdaftar',
+    '◫'
+  ],
+
+  [
+    'Whiteboard',
+    '1 unit terdaftar',
+    '▯'
+  ],
+
+  [
+    'Lemari arsip',
+    '2 unit terdaftar',
+    '▥'
+  ],
+
+  [
+    'APAR',
+    '1 unit terdaftar',
+    '◉'
+  ]
 
 ];
 
@@ -95,22 +135,20 @@ const catalog = [
 
 let history =
   JSON.parse(
-    localStorage.getItem('aikon-history') || 'null'
-  ) || initialHistory;
+    localStorage.getItem(
+      'aikon-history'
+    ) || 'null'
+  )
+  || initialHistory;
+
 
 let stream = null;
 
+
 let detected = false;
 
-let currentProfile = null;
 
-const ALLOWED_ROLES = [
-  'Field User',
-  'Supervisor',
-  'QA/QC',
-  'Project Manager',
-  'Admin'
-];
+let currentProfile = null;
 
 
 /* =========================================================
@@ -118,10 +156,17 @@ const ALLOWED_ROLES = [
 ========================================================= */
 
 const $ = selector =>
-  document.querySelector(selector);
+  document.querySelector(
+    selector
+  );
+
 
 const $$ = selector =>
-  [...document.querySelectorAll(selector)];
+  [
+    ...document.querySelectorAll(
+      selector
+    )
+  ];
 
 
 /* =========================================================
@@ -144,644 +189,1262 @@ function saveHistory() {
 
 function toast(message) {
 
-  const el = $('#toast');
+  const el =
+    $('#toast');
 
-  if (!el) return;
 
-  el.textContent = message;
+  if (!el) {
+    return;
+  }
 
-  el.classList.remove('hidden');
 
-  setTimeout(() => {
+  el.textContent =
+    message;
 
-    el.classList.add('hidden');
 
-  }, 2800);
+  el.classList.remove(
+    'hidden'
+  );
+
+
+  setTimeout(
+    () => {
+
+      el.classList.add(
+        'hidden'
+      );
+
+    },
+    2800
+  );
 
 }
 
 
 /* =========================================================
-   AUTH / ROLE HELPERS
+   AUTH UI
 ========================================================= */
 
-function ensureSignupRoleField() {
+function showLogin() {
 
-  if ($('#signup-role')) return;
+  $('#login-view')
+    ?.classList.remove(
+      'hidden'
+    );
+
+
+  $('#signup-view')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  $('#app-shell')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  $$('.view')
+    .forEach(
+      view => {
+
+        view.classList.remove(
+          'active'
+        );
+
+      }
+    );
+
+
+  stopCamera();
+
+}
+
+
+function showSignup() {
+
+  $('#login-view')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  $('#signup-view')
+    ?.classList.remove(
+      'hidden'
+    );
+
+
+  $('#app-shell')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  stopCamera();
+
+}
+
+
+function showApp() {
+
+  $('#login-view')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  $('#signup-view')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  $('#app-shell')
+    ?.classList.remove(
+      'hidden'
+    );
+
+
+  route(
+    location.hash.slice(1)
+    || 'dashboard'
+  );
+
+}
+
+
+/* =========================================================
+   SIGN UP
+========================================================= */
+
+async function signUp() {
+
+  const fullName =
+    $('#signup-name')
+      ?.value
+      .trim();
+
+
+  const username =
+    $('#signup-username')
+      ?.value
+      .trim()
+      .toLowerCase();
+
+
+  const email =
+    $('#signup-email')
+      ?.value
+      .trim()
+      .toLowerCase();
+
 
   const password =
-    $('#signup-password');
+    $('#signup-password')
+      ?.value;
 
-  if (!password) return;
 
-  const wrapper =
-    document.createElement('div');
+  const requestedRole =
+    $('#signup-role')
+      ?.value;
 
-  wrapper.className = 'field';
 
-  wrapper.innerHTML = `
+  /* =====================================================
+     VALIDATION
+  ====================================================== */
 
-    <label for="signup-role">
-      Role yang diminta
-    </label>
+  if (
+    !fullName
+    || !username
+    || !email
+    || !password
+    || !requestedRole
+  ) {
 
-    <select id="signup-role">
+    toast(
+      'Lengkapi semua data dan pilih role.'
+    );
 
-      <option value="">
-        Pilih role
-      </option>
-
-      ${ALLOWED_ROLES
-        .filter(role => role !== 'Admin')
-        .map(role =>
-          `<option value="${role}">
-            ${role}
-          </option>`
-        )
-        .join('')}
-
-    </select>
-
-    <small>
-      Role akan diperiksa oleh Admin sebelum akun dapat digunakan.
-    </small>
-
-  `;
-
-  const passwordField =
-    password.closest('.field');
-
-  if (passwordField) {
-
-    passwordField.after(wrapper);
-
-  } else {
-
-    password.after(wrapper);
+    return;
 
   }
 
-}
 
+  if (
+    username.length < 3
+  ) {
 
-function isAdminProfile(profile) {
-
-  return (
-    profile?.role === 'Admin' &&
-    profile?.approval_status === 'approved'
-  );
-
-}
-
-
-function addAdminNavigation() {
-
-  if (!isAdminProfile(currentProfile)) return;
-
-  if ($('[data-route="admin"]')) return;
-
-  const nav =
-    $('.sidebar');
-
-  if (!nav) return;
-
-  const navContainer =
-    nav.querySelector('.nav-links') ||
-    nav.querySelector('nav') ||
-    nav;
-
-  const link =
-    document.createElement('a');
-
-  link.href = '#admin';
-
-  link.className = 'nav-link';
-
-  link.dataset.route = 'admin';
-
-  link.innerHTML = `
-    <span>▣</span>
-    <span>Manajemen User</span>
-  `;
-
-  navContainer.appendChild(link);
-
-  link.addEventListener(
-    'click',
-    event => {
-
-      event.preventDefault();
-
-      route('admin');
-
-    }
-  );
-
-}
-
-
-function ensureAdminView() {
-
-  if ($('#admin')) return;
-
-  const content =
-    $('.content');
-
-  if (!content) return;
-
-  const section =
-    document.createElement('section');
-
-  section.className = 'view';
-
-  section.id = 'admin';
-
-  section.innerHTML = `
-
-    <div class="page-heading">
-
-      <div>
-
-        <p class="eyebrow">
-          ADMINISTRATOR
-        </p>
-
-        <h1>
-          Manajemen pengguna
-        </h1>
-
-        <p>
-          Periksa permintaan registrasi dan kelola role pengguna.
-        </p>
-
-      </div>
-
-      <button
-        class="secondary-button"
-        id="refresh-admin"
-      >
-        Refresh
-      </button>
-
-    </div>
-
-
-    <div class="panel">
-
-      <div class="panel-heading">
-
-        <div>
-
-          <h2>
-            Permintaan registrasi
-          </h2>
-
-          <p id="admin-request-count">
-            Memuat...
-          </p>
-
-        </div>
-
-      </div>
-
-      <div id="admin-requests"></div>
-
-    </div>
-
-
-    <div
-      class="panel"
-      style="margin-top:20px"
-    >
-
-      <div class="panel-heading">
-
-        <div>
-
-          <h2>
-            Pengguna
-          </h2>
-
-          <p>
-            Role dapat diubah setelah akun disetujui.
-          </p>
-
-        </div>
-
-      </div>
-
-      <div id="admin-users"></div>
-
-    </div>
-
-  `;
-
-  content.appendChild(section);
-
-  $('#refresh-admin')
-    ?.addEventListener(
-      'click',
-      loadAdminPanel
+    toast(
+      'Username minimal 3 karakter.'
     );
+
+    return;
+
+  }
+
+
+  if (
+    !/^[a-z0-9._-]+$/
+      .test(username)
+  ) {
+
+    toast(
+      'Username hanya boleh menggunakan huruf, angka, titik, underscore, atau strip.'
+    );
+
+    return;
+
+  }
+
+
+  if (
+    password.length < 6
+  ) {
+
+    toast(
+      'Password minimal 6 karakter.'
+    );
+
+    return;
+
+  }
+
+
+  /* =====================================================
+     CHECK USERNAME
+  ====================================================== */
+
+  const {
+    data: existingUsername,
+    error: usernameError
+  } =
+    await supabaseClient
+
+      .from('profiles')
+
+      .select('id')
+
+      .eq(
+        'username',
+        username
+      )
+
+      .maybeSingle();
+
+
+  if (usernameError) {
+
+    console.error(
+      usernameError
+    );
+
+    toast(
+      'Gagal memeriksa username.'
+    );
+
+    return;
+
+  }
+
+
+  if (existingUsername) {
+
+    toast(
+      'Username sudah digunakan.'
+    );
+
+    return;
+
+  }
+
+
+  /* =====================================================
+     CREATE AUTH ACCOUNT
+  ====================================================== */
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth
+      .signUp({
+
+        email,
+
+        password,
+
+        options: {
+
+          data: {
+
+            username,
+
+            full_name:
+              fullName,
+
+            requested_role:
+              requestedRole
+
+          }
+
+        }
+
+      });
+
+
+  if (error) {
+
+    console.error(
+      error
+    );
+
+    toast(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  if (!data.user) {
+
+    toast(
+      'Registrasi gagal.'
+    );
+
+    return;
+
+  }
+
+
+  /* =====================================================
+     CREATE PROFILE
+     
+     We keep this compatible with the
+     current profiles structure.
+  ====================================================== */
+
+  const {
+    error: profileError
+  } =
+    await supabaseClient
+
+      .from('profiles')
+
+      .insert({
+
+        id:
+          data.user.id,
+
+        username,
+
+        full_name:
+          fullName,
+
+        role:
+          requestedRole
+
+      });
+
+
+  if (profileError) {
+
+    console.error(
+      profileError
+    );
+
+    toast(
+      'Akun berhasil dibuat, tetapi profil gagal disimpan.'
+    );
+
+    return;
+
+  }
+
+
+  /* =====================================================
+     EMAIL CONFIRMATION
+  ====================================================== */
+
+  if (!data.session) {
+
+    toast(
+      'Akun berhasil dibuat. Cek email untuk verifikasi.'
+    );
+
+
+    $('#signup-name').value =
+      '';
+
+    $('#signup-username').value =
+      '';
+
+    $('#signup-email').value =
+      '';
+
+    $('#signup-password').value =
+      '';
+
+    $('#signup-role').value =
+      '';
+
+
+    showLogin();
+
+    return;
+
+  }
+
+
+  /* =====================================================
+     SUCCESS
+  ====================================================== */
+
+  toast(
+    'Akun berhasil dibuat.'
+  );
+
+
+  $('#signup-name').value =
+    '';
+
+  $('#signup-username').value =
+    '';
+
+  $('#signup-email').value =
+    '';
+
+  $('#signup-password').value =
+    '';
+
+  $('#signup-role').value =
+    '';
+
+
+  await loadUser();
 
 }
 
 
 /* =========================================================
-   ADMIN PANEL
+   LOGIN
 ========================================================= */
 
-async function loadAdminPanel() {
+async function login() {
 
-  if (!isAdminProfile(currentProfile)) {
+  const email =
+    $('#login-email')
+      ?.value
+      .trim();
 
-    toast('Akses Admin diperlukan.');
+
+  const password =
+    $('#login-password')
+      ?.value;
+
+
+  if (
+    !email
+    || !password
+  ) {
+
+    toast(
+      'Masukkan email dan password.'
+    );
 
     return;
 
   }
 
-  ensureAdminView();
-
-  const requestsEl =
-    $('#admin-requests');
-
-  const usersEl =
-    $('#admin-users');
-
-  if (!requestsEl || !usersEl) return;
-
-  requestsEl.innerHTML =
-    '<p>Memuat permintaan...</p>';
-
-  usersEl.innerHTML =
-    '<p>Memuat pengguna...</p>';
-
-
-  /* -------------------------------------------------------
-     REGISTRATION REQUESTS
-  ------------------------------------------------------- */
 
   const {
-    data: requests,
-    error: requestError
-  } = await supabaseClient
+    error
+  } =
+    await supabaseClient.auth
+      .signInWithPassword({
 
-    .from('registration_requests')
+        email,
 
-    .select(
-      'id, user_id, requested_role, status, reviewed_by, reviewed_at, created_at'
+        password
+
+      });
+
+
+  if (error) {
+
+    console.error(
+      error
+    );
+
+    toast(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  $('#login-email').value =
+    '';
+
+  $('#login-password').value =
+    '';
+
+
+  await loadUser();
+
+
+  toast(
+    'Login berhasil.'
+  );
+
+}
+
+
+/* =========================================================
+   LOAD CURRENT USER
+========================================================= */
+
+async function loadUser() {
+
+  const {
+    data: {
+      user
+    }
+  } =
+    await supabaseClient.auth
+      .getUser();
+
+
+  /* =====================================================
+     NO USER
+  ====================================================== */
+
+  if (!user) {
+
+    currentProfile =
+      null;
+
+    showLogin();
+
+    return;
+
+  }
+
+
+  /* =====================================================
+     GET PROFILE
+  ====================================================== */
+
+  const {
+    data: profile,
+    error
+  } =
+    await supabaseClient
+
+      .from('profiles')
+
+      .select(
+        'username, full_name, role'
+      )
+
+      .eq(
+        'id',
+        user.id
+      )
+
+      .single();
+
+
+  if (error) {
+
+    console.error(
+      error
+    );
+
+
+    currentProfile =
+      null;
+
+
+    toast(
+      'Profil user tidak ditemukan.'
+    );
+
+
+    return;
+
+  }
+
+
+  currentProfile =
+    profile;
+
+
+  /* =====================================================
+     USER NAME
+  ====================================================== */
+
+  if (
+    $('#user-name')
+  ) {
+
+    $('#user-name')
+      .textContent =
+      profile.full_name
+      || 'User';
+
+  }
+
+
+  /* =====================================================
+     USER ROLE
+  ====================================================== */
+
+  if (
+    $('#user-role')
+  ) {
+
+    $('#user-role')
+      .textContent =
+      profile.role
+      || 'Field User';
+
+  }
+
+
+  /* =====================================================
+     INITIALS
+  ====================================================== */
+
+  const initials =
+
+    (
+      profile.full_name
+      || 'User'
     )
 
-    .eq(
-      'status',
-      'pending'
+      .split(' ')
+
+      .filter(Boolean)
+
+      .slice(0, 2)
+
+      .map(
+        word =>
+          word[0]
+      )
+
+      .join('')
+
+      .toUpperCase();
+
+
+  if (
+    $('#user-avatar')
+  ) {
+
+    $('#user-avatar')
+      .textContent =
+      initials
+      || 'US';
+
+  }
+
+
+  /* =====================================================
+     DASHBOARD GREETING
+  ====================================================== */
+
+  const firstName =
+
+    (
+      profile.full_name
+      || 'User'
     )
 
-    .order(
-      'created_at',
-      {
-        ascending: false
+      .split(' ')
+
+      .filter(Boolean)[0]
+    || 'User';
+
+
+  if (
+    $('#dashboard-greeting')
+  ) {
+
+    $('#dashboard-greeting')
+      .textContent =
+      `Selamat pagi, ${firstName}.`;
+
+  }
+
+
+  /* =====================================================
+     SHOW APPLICATION
+  ====================================================== */
+
+  showApp();
+
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+async function logout() {
+
+  const {
+    error
+  } =
+    await supabaseClient.auth
+      .signOut();
+
+
+  if (error) {
+
+    console.error(
+      error
+    );
+
+    toast(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  currentProfile =
+    null;
+
+
+  $('#user-menu')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  $('#user-menu-button')
+    ?.setAttribute(
+      'aria-expanded',
+      'false'
+    );
+
+
+  showLogin();
+
+
+  toast(
+    'Anda telah logout.'
+  );
+
+}
+
+
+/* =========================================================
+   ROUTING
+========================================================= */
+
+function route(name) {
+
+  const validRoutes = [
+
+    'dashboard',
+
+    'scan',
+
+    'history',
+
+    'training',
+
+    'catalog'
+
+  ];
+
+
+  if (
+    !validRoutes
+      .includes(name)
+  ) {
+
+    name =
+      'dashboard';
+
+  }
+
+
+  $$('.view')
+    .forEach(
+      view => {
+
+        view.classList.toggle(
+
+          'active',
+
+          view.id === name
+
+        );
+
       }
     );
 
 
-  if (requestError) {
+  $$('.nav-link')
+    .forEach(
+      link => {
 
-    console.error(requestError);
+        link.classList.toggle(
 
-    requestsEl.innerHTML = `
-      <p>
-        Gagal memuat permintaan registrasi.
-      </p>
-    `;
+          'active',
 
-  } else {
+          link.dataset.route
+          === name
 
-    $('#admin-request-count')
+        );
+
+      }
+    );
+
+
+  const breadcrumbs = {
+
+    dashboard:
+      'Beranda',
+
+    scan:
+      'Verifikasi aset',
+
+    history:
+      'Riwayat scan',
+
+    training:
+      'Data training',
+
+    catalog:
+      'Katalog ruang'
+
+  };
+
+
+  if (
+    $('#breadcrumb')
+  ) {
+
+    $('#breadcrumb')
       .textContent =
-      `${requests?.length || 0} permintaan menunggu persetujuan.`;
+      breadcrumbs[name];
+
+  }
 
 
-    if (!requests?.length) {
-
-      requestsEl.innerHTML = `
-        <p>
-          Belum ada permintaan registrasi.
-        </p>
-      `;
-
-    } else {
-
-      const userIds =
-        requests.map(
-          request => request.user_id
-        );
+  $('.sidebar')
+    ?.classList.remove(
+      'open'
+    );
 
 
-      const {
-        data: requestProfiles
-      } = await supabaseClient
+  if (
+    name !== 'scan'
+  ) {
 
-        .from('profiles')
+    stopCamera();
 
-        .select(
-          'id, username, full_name, email, requested_role'
-        )
-
-        .in(
-          'id',
-          userIds
-        );
+  }
 
 
-      const profileMap =
-        Object.fromEntries(
-          (requestProfiles || [])
-            .map(profile =>
-              [profile.id, profile]
-            )
-        );
+  window.scrollTo({
+
+    top: 0,
+
+    behavior: 'smooth'
+
+  });
 
 
-      requestsEl.innerHTML =
-        requests.map(request => {
+  if (
+    location.hash
+      .slice(1)
+    !== name
+  ) {
 
-          const profile =
-            profileMap[request.user_id] || {};
+    history.pushState(
+      null,
+      '',
+      `#${name}`
+    );
 
-          return `
+  }
 
-            <div
-              class="activity-row"
-              style="padding:16px 0"
-            >
-
-              <div
-                class="activity-copy"
-                style="flex:1"
-              >
-
-                <strong>
-                  ${profile.full_name || '-'}
-                </strong>
-
-                <small>
-
-                  @${profile.username || '-'}
-                  ·
-                  ${profile.email || '-'}
-
-                  · Meminta role:
-
-                  <strong>
-                    ${request.requested_role || '-'}
-                  </strong>
-
-                </small>
-
-              </div>
+}
 
 
-              <div
-                style="
-                  display:flex;
-                  gap:8px;
-                "
-              >
+/* =========================================================
+   DASHBOARD ACTIVITY
+========================================================= */
 
-                <button
-                  class="primary-button admin-approve"
-                  data-id="${request.id}"
-                >
-                  Approve
-                </button>
+function activity() {
 
-                <button
-                  class="secondary-button admin-decline"
-                  data-id="${request.id}"
-                >
-                  Decline
-                </button>
+  const target =
+    $('#activity-list');
 
-              </div>
 
+  if (!target) {
+    return;
+  }
+
+
+  target.innerHTML =
+
+    history
+
+      .slice(0, 4)
+
+      .map(
+        row => `
+
+          <div class="activity-row">
+
+            <div class="activity-icon">
+              ${row.icon}
             </div>
 
-          `;
 
-        }).join('');
-
-
-      $$('.admin-approve')
-        .forEach(button => {
-
-          button.addEventListener(
-            'click',
-            () =>
-              approveRegistration(
-                button.dataset.id
-              )
-          );
-
-        });
-
-
-      $$('.admin-decline')
-        .forEach(button => {
-
-          button.addEventListener(
-            'click',
-            () =>
-              declineRegistration(
-                button.dataset.id
-              )
-          );
-
-        });
-
-    }
-
-  }
-
-
-  /* -------------------------------------------------------
-     USERS
-  ------------------------------------------------------- */
-
-  const {
-    data: users,
-    error: usersError
-  } = await supabaseClient
-
-    .from('profiles')
-
-    .select(
-      `
-      id,
-      username,
-      full_name,
-      email,
-      requested_role,
-      role,
-      approval_status,
-      created_at
-      `
-    )
-
-    .order(
-      'created_at',
-      {
-        ascending: false
-      }
-    );
-
-
-  if (usersError) {
-
-    console.error(usersError);
-
-    usersEl.innerHTML = `
-      <p>
-        Gagal memuat pengguna.
-      </p>
-    `;
-
-    return;
-
-  }
-
-
-  usersEl.innerHTML =
-    users?.length
-
-      ? users.map(user => `
-
-          <div
-            class="activity-row"
-            style="padding:16px 0"
-          >
-
-            <div
-              class="activity-copy"
-              style="flex:1"
-            >
+            <div class="activity-copy">
 
               <strong>
-                ${user.full_name || '-'}
+                ${row.item}
               </strong>
 
               <small>
-
-                @${user.username || '-'}
-                ·
-                ${user.email || '-'}
-
-                · Status:
-                ${user.approval_status || '-'}
-
-                · Role:
-                ${user.role || '-'}
-
+                ${row.room} · Hari ini, ${row.time}
               </small>
 
             </div>
 
 
-            <select
-              class="admin-role-select"
-              data-id="${user.id}"
+            <span
+              class="status ${
+                row.status === 'matched'
+                  ? 'ok'
+                  : 'warn'
+              }"
             >
 
-              ${ALLOWED_ROLES
-                .map(role => `
+              ${
+                row.status === 'matched'
+                  ? 'SESUAI'
+                  : 'DITINJAU'
+              }
 
-                  <option
-                    value="${role}"
-                    ${
-                      user.role === role
-                        ? 'selected'
-                        : ''
-                    }
-                  >
-                    ${role}
-                  </option>
-
-                `)
-                .join('')}
-
-            </select>
+            </span>
 
           </div>
 
-        `).join('')
+        `
+      )
 
-      : `
-        <p>
-          Belum ada pengguna.
-        </p>
-      `;
-
-
-  $$('.admin-role-select')
-    .forEach(select => {
-
-      select.addEventListener(
-        'change',
-        () =>
-          changeUserRole(
-            select.dataset.id,
-            select.value
-          )
-      );
-
-    });
+      .join('');
 
 }
 
 
 /* =========================================================
-   APPROVE REGISTRATION
+   HISTORY
 ========================================================= */
 
-async function approveRegistration(
-  requestId
-) {
+function renderHistory() {
 
-  if (!isAdminProfile(currentProfile)) {
+  const search =
+    $('#history-search');
 
-    toast('Akses Admin diperlukan.');
+
+  const statusFilter =
+    $('#status-filter');
+
+
+  const target =
+    $('#history-body');
+
+
+  if (
+    !search
+    || !statusFilter
+    || !target
+  ) {
 
     return;
 
   }
 
 
-  const {
-    data: request,
-    error: requestError
-  } = await supabaseClient
-
-    .from('registration_requests')
-
-    .select(
-      'id, user_id, requested_role, status'
-    )
-
-    .eq(
-      'id',
-      requestId
-    )
-
-    .single();
+  const q =
+    search.value
+      .toLowerCase();
 
 
-  if (requestError || !request) {
+  const filter =
+    statusFilter.value;
 
-    console.error(requestError);
+
+  const rows =
+
+    history.filter(
+      row =>
+
+        (
+          filter === 'all'
+          ||
+          row.status === filter
+        )
+
+        &&
+
+        `${row.item} ${row.room}`
+          .toLowerCase()
+          .includes(q)
+
+    );
+
+
+  target.innerHTML =
+
+    rows
+
+      .map(
+        row => `
+
+          <tr>
+
+            <td>
+
+              <div class="table-item">
+
+                <span class="mini-item">
+                  ${row.icon}
+                </span>
+
+                <strong>
+                  ${row.item}
+                </strong>
+
+              </div>
+
+            </td>
+
+
+            <td>
+              ${row.room}
+            </td>
+
+
+            <td>
+              Hari ini, ${row.time}
+            </td>
+
+
+            <td>
+
+              <span
+                class="status ${
+                  row.status === 'matched'
+                    ? 'ok'
+                    : 'warn'
+                }"
+              >
+
+                ${
+                  row.status === 'matched'
+                    ? 'SESUAI KATALOG'
+                    : 'PERLU DITINJAU'
+                }
+
+              </span>
+
+            </td>
+
+
+            <td>
+
+              <span class="sync">
+
+                ${
+                  row.sync
+                    ? '● Tersinkron'
+                    : '◌ Menunggu sync'
+                }
+
+              </span>
+
+            </td>
+
+          </tr>
+
+        `
+      )
+
+      .join('')
+
+      ||
+
+      `
+
+        <tr>
+
+          <td
+            colspan="5"
+            style="
+              text-align:center;
+              padding:32px;
+            "
+          >
+            Tidak ada hasil yang cocok.
+          </td>
+
+        </tr>
+
+      `;
+
+}
+
+
+/* =========================================================
+   CATALOG
+========================================================= */
+
+function renderCatalog() {
+
+  const target =
+    $('#catalog-grid');
+
+
+  if (!target) {
+    return;
+  }
+
+
+  target.innerHTML =
+
+    catalog
+
+      .map(
+
+        ([name, detail, icon]) => `
+
+          <article
+            class="panel catalog-card"
+          >
+
+            <div
+              class="item-thumb"
+            >
+              ${icon}
+            </div>
+
+
+            <h3>
+              ${name}
+            </h3>
+
+
+            <p>
+              ${detail}
+            </p>
+
+
+            <small>
+              TERDAFTAR DI RUANG
+            </small>
+
+          </article>
+
+        `
+
+      )
+
+      .join('');
+
+}
+
+
+/* =========================================================
+   DASHBOARD STATS
+========================================================= */
+
+function updateStats() {
+
+  const saved =
+    Math.max(
+      0,
+      history.length
+      - initialHistory.length
+    );
+
+
+  const scanTotal =
+    24 + saved;
+
+
+  const matchedAdditional =
+
+    history.filter(
+
+      row =>
+        row.status === 'matched'
+        &&
+        !initialHistory.includes(row)
+
+    ).length;
+
+
+  const matchedTotal =
+    21 + matchedAdditional;
+
+
+  if (
+    $('#scan-total')
+  ) {
+
+    $('#scan-total')
+      .textContent =
+      scanTotal;
+
+  }
+
+
+  if (
+    $('#matched-total')
+  ) {
+
+    $('#matched-total')
+      .textContent =
+      matchedTotal;
+
+  }
+
+}
+
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+async function startCamera() {
+
+  if (
+    !navigator
+      .mediaDevices
+      ?.getUserMedia
+  ) {
 
     toast(
-      'Permintaan tidak ditemukan.'
+      'Browser ini belum mendukung akses kamera.'
     );
 
     return;
@@ -789,876 +1452,472 @@ async function approveRegistration(
   }
 
 
-  const {
-    data: {
-      user: adminUser
+  try {
+
+    stream =
+
+      await navigator
+        .mediaDevices
+        .getUserMedia({
+
+          video: {
+
+            facingMode: {
+
+              ideal:
+                'environment'
+
+            }
+
+          },
+
+          audio: false
+
+        });
+
+
+    const video =
+      $('#camera-video');
+
+
+    if (!video) {
+
+      return;
+
     }
-  } =
-    await supabaseClient.auth.getUser();
 
 
-  const {
-    error: profileError
-  } =
-    await supabaseClient
+    video.srcObject =
+      stream;
 
-      .from('profiles')
 
-      .update({
-
-        role:
-          request.requested_role,
-
-        approval_status:
-          'approved',
-
-        approved_by:
-          adminUser?.id || null,
-
-        approved_at:
-          new Date().toISOString()
-
-      })
-
-      .eq(
-        'id',
-        request.user_id
+    $('#camera-feed')
+      ?.classList.add(
+        'live'
       );
 
 
-  if (profileError) {
+    $('#camera-placeholder')
+      ?.classList.add(
+        'hidden'
+      );
 
-    console.error(profileError);
 
-    toast(
-      'Gagal menyetujui akun.'
-    );
+    $('#camera-button')
+      .textContent =
+      'Matikan kamera';
 
-    return;
+
+    $('#detect-button')
+      .disabled =
+      false;
+
+
+    $('#detect-button')
+      .classList.remove(
+        'disabled'
+      );
+
+
+    $('#camera-status')
+      .textContent =
+      'Kamera aktif · siap mendeteksi';
+
+
+    detected =
+      false;
+
+
+    $('#result-empty')
+      ?.classList.remove(
+        'hidden'
+      );
+
+
+    $('#result-found')
+      ?.classList.add(
+        'hidden'
+      );
+
+
+    $('#detection-box')
+      ?.classList.add(
+        'hidden'
+      );
+
+
+    $('#scanline')
+      ?.classList.add(
+        'hidden'
+      );
 
   }
 
 
-  const {
-    error: requestUpdateError
-  } =
-    await supabaseClient
-
-      .from('registration_requests')
-
-      .update({
-
-        status:
-          'approved',
-
-        reviewed_by:
-          adminUser?.id || null,
-
-        reviewed_at:
-          new Date().toISOString()
-
-      })
-
-      .eq(
-        'id',
-        requestId
-      );
-
-
-  if (requestUpdateError) {
+  catch (error) {
 
     console.error(
-      requestUpdateError
+      error
     );
+
 
     toast(
-      'Profil disetujui, tetapi request gagal diperbarui.'
+      'Izin kamera diperlukan untuk mulai scan.'
     );
 
-    return;
-
   }
-
-
-  toast(
-    'Registrasi berhasil disetujui.'
-  );
-
-  await loadAdminPanel();
 
 }
 
 
 /* =========================================================
-   DECLINE REGISTRATION
+   STOP CAMERA
 ========================================================= */
 
-async function declineRegistration(
-  requestId
-) {
+function stopCamera() {
 
-  if (!isAdminProfile(currentProfile)) {
+  if (stream) {
 
-    toast('Akses Admin diperlukan.');
-
-    return;
-
-  }
-
-
-  const {
-    data: {
-      user: adminUser
-    }
-  } =
-    await supabaseClient.auth.getUser();
-
-
-  const {
-    data: request
-  } =
-    await supabaseClient
-
-      .from('registration_requests')
-
-      .select(
-        'user_id'
-      )
-
-      .eq(
-        'id',
-        requestId
-      )
-
-      .single();
-
-
-  if (!request) {
-
-    toast(
-      'Permintaan tidak ditemukan.'
-    );
-
-    return;
-
-  }
-
-
-  const {
-    error: profileError
-  } =
-    await supabaseClient
-
-      .from('profiles')
-
-      .update({
-
-        approval_status:
-          'declined'
-
-      })
-
-      .eq(
-        'id',
-        request.user_id
+    stream
+      .getTracks()
+      .forEach(
+        track =>
+          track.stop()
       );
 
-
-  if (profileError) {
-
-    console.error(profileError);
-
-    toast(
-      'Gagal menolak akun.'
-    );
-
-    return;
-
   }
 
 
-  const {
-    error
-  } =
-    await supabaseClient
-
-      .from('registration_requests')
-
-      .update({
-
-        status:
-          'declined',
-
-        reviewed_by:
-          adminUser?.id || null,
-
-        reviewed_at:
-          new Date().toISOString()
-
-      })
-
-      .eq(
-        'id',
-        requestId
-      );
-
-
-  if (error) {
-
-    console.error(error);
-
-    toast(
-      'Status request gagal diperbarui.'
-    );
-
-    return;
-
-  }
-
-
-  toast(
-    'Registrasi ditolak.'
-  );
-
-  await loadAdminPanel();
-
-}
-
-
-/* =========================================================
-   CHANGE USER ROLE
-========================================================= */
-
-async function changeUserRole(
-  userId,
-  newRole
-) {
-
-  if (!isAdminProfile(currentProfile)) {
-
-    toast(
-      'Akses Admin diperlukan.'
-    );
-
-    return;
-
-  }
-
-
-  if (!ALLOWED_ROLES.includes(newRole)) {
-
-    toast(
-      'Role tidak valid.'
-    );
-
-    return;
-
-  }
-
-
-  const {
-    error
-  } =
-    await supabaseClient
-
-      .from('profiles')
-
-      .update({
-
-        role:
-          newRole
-
-      })
-
-      .eq(
-        'id',
-        userId
-      );
-
-
-  if (error) {
-
-    console.error(error);
-
-    toast(
-      'Gagal mengubah role.'
-    );
-
-    return;
-
-  }
-
-
-  toast(
-    `Role diubah menjadi ${newRole}.`
-  );
-
-  await loadAdminPanel();
-
-}
-
-/* =========================================================
-   AUTH UI
-========================================================= */
-
-function showLogin() {
-
-  $('#login-view')
-    ?.classList.remove('hidden');
-
-  $('#signup-view')
-    ?.classList.add('hidden');
-
-  $('#app-shell')
-    ?.classList.add('auth-mode');
-
-  $$('.view')
-    .forEach(view => {
-
-      view.classList.remove(
-        'active'
-      );
-
-    });
-
-}
-
-
-function showSignup() {
-
-  $('#login-view')
-    ?.classList.add('hidden');
-
-  $('#signup-view')
-    ?.classList.remove('hidden');
-
-  $('#app-shell')
-    ?.classList.add('auth-mode');
-
-  ensureSignupRoleField();
-
-}
-
-
-function showApp() {
-
-  $('#login-view')
-    ?.classList.add('hidden');
-
-  $('#signup-view')
-    ?.classList.add('hidden');
-
-  $('#app-shell')
-    ?.classList.remove('auth-mode');
-
-  route(
-    location.hash.slice(1)
-      || 'dashboard'
-  );
-
-}
-
-
-/* =========================================================
-   SIGN UP
-========================================================= */
-
-async function signUp() {
-
-  const fullName =
-    $('#signup-name')
-      ?.value
-      .trim();
-
-  const username =
-    $('#signup-username')
-      ?.value
-      .trim()
-      .toLowerCase();
-
-  const email =
-    $('#signup-email')
-      ?.value
-      .trim();
-
-  const password =
-    $('#signup-password')
-      ?.value;
-
-  const requestedRole =
-    $('#signup-role')
-      ?.value;
-
-
-  if (
-    !fullName ||
-    !username ||
-    !email ||
-    !password ||
-    !requestedRole
-  ) {
-
-    toast(
-      'Lengkapi semua data dan pilih role.'
-    );
-
-    return;
-
-  }
-
-
-  if (
-    requestedRole === 'Admin'
-  ) {
-
-    toast(
-      'Role Admin hanya dapat diberikan oleh Admin.'
-    );
-
-    return;
-
-  }
-
-
-  if (username.length < 3) {
-
-    toast(
-      'Username minimal 3 karakter.'
-    );
-
-    return;
-
-  }
-
-
-  if (
-    !/^[a-z0-9._-]+$/.test(
-      username
-    )
-  ) {
-
-    toast(
-      'Username hanya boleh menggunakan huruf, angka, titik, underscore, atau strip.'
-    );
-
-    return;
-
-  }
-
-
-  if (password.length < 6) {
-
-    toast(
-      'Password minimal 6 karakter.'
-    );
-
-    return;
-
-  }
-
-
-  /*
-    IMPORTANT:
-
-    Do NOT insert into profiles manually.
-
-    The Supabase database trigger created earlier
-    automatically creates:
-
-    profiles
-    +
-    registration_requests
-
-    from the metadata below.
-  */
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.auth.signUp({
-
-      email,
-
-      password,
-
-      options: {
-
-        data: {
-
-          full_name:
-            fullName,
-
-          username:
-            username,
-
-          requested_role:
-            requestedRole
-
-        }
-
-      }
-
-    });
-
-
-  if (error) {
-
-    console.error(error);
-
-    toast(
-      error.message
-    );
-
-    return;
-
-  }
-
-
-  if (!data.user) {
-
-    toast(
-      'Registrasi gagal.'
-    );
-
-    return;
-
-  }
-
-
-  /*
-    If email confirmation is enabled,
-    session will be null.
-
-    If session exists, immediately sign out
-    because approval is still required.
-  */
-
-  if (data.session) {
-
-    await supabaseClient.auth.signOut();
-
-  }
-
-
-  $('#signup-name')
-    .value = '';
-
-  $('#signup-username')
-    .value = '';
-
-  $('#signup-email')
-    .value = '';
-
-  $('#signup-password')
-    .value = '';
-
-  if ($('#signup-role')) {
-
-    $('#signup-role')
-      .value = '';
-
-  }
-
-
-  toast(
-    'Registrasi berhasil. Tunggu approval Admin.'
-  );
-
-  showLogin();
-
-}
-
-
-/* =========================================================
-   LOGIN
-========================================================= */
-
-async function login() {
-
-  const email =
-    $('#login-email')
-      ?.value
-      .trim();
-
-  const password =
-    $('#login-password')
-      ?.value;
-
-
-  if (!email || !password) {
-
-    toast(
-      'Masukkan email dan password.'
-    );
-
-    return;
-
-  }
-
-
-  const {
-    error
-  } =
-    await supabaseClient.auth
-      .signInWithPassword({
-
-        email,
-
-        password
-
-      });
-
-
-  if (error) {
-
-    console.error(error);
-
-    toast(
-      error.message
-    );
-
-    return;
-
-  }
-
-
-  $('#login-email')
-    .value = '';
-
-  $('#login-password')
-    .value = '';
-
-
-  await loadUser();
-
-}
-
-
-/* =========================================================
-   LOAD CURRENT USER
-========================================================= */
-
-async function loadUser() {
-
-  const {
-    data: {
-      user
-    }
-  } =
-    await supabaseClient.auth
-      .getUser();
-
-
-  if (!user) {
-
-    currentProfile = null;
-
-    showLogin();
-
-    return;
-
-  }
-
-
-  const {
-    data: profile,
-    error
-  } =
-    await supabaseClient
-
-      .from('profiles')
-
-      .select(
-        `
-        id,
-        username,
-        full_name,
-        email,
-        requested_role,
-        role,
-        approval_status
-        `
-      )
-
-      .eq(
-        'id',
-        user.id
-      )
-
-      .single();
-
-
-  if (error || !profile) {
-
-    console.error(error);
-
-    toast(
-      'Profil user tidak ditemukan.'
-    );
-
-    await supabaseClient.auth
-      .signOut();
-
-    showLogin();
-
-    return;
-
-  }
-
-
-  currentProfile =
-    profile;
-
-
-  /*
-    APPROVAL GATE
-  */
-
-  if (
-    profile.approval_status !==
-    'approved'
-  ) {
-
-    await supabaseClient.auth
-      .signOut();
-
-
-    if (
-      profile.approval_status ===
-      'pending'
-    ) {
-
-      toast(
-        'Akun masih menunggu approval Admin.'
-      );
-
-    } else if (
-      profile.approval_status ===
-      'declined'
-    ) {
-
-      toast(
-        'Registrasi Anda ditolak Admin.'
-      );
-
-    } else {
-
-      toast(
-        'Akun belum disetujui.'
-      );
-
-    }
-
-
-    showLogin();
-
-    return;
-
-  }
-
-
-  /*
-    DISPLAY USER
-  */
-
-  if ($('#user-name')) {
-
-    $('#user-name')
-      .textContent =
-      profile.full_name;
-
-  }
-
-
-  if ($('#user-role')) {
-
-    $('#user-role')
-      .textContent =
-      profile.role;
-
-  }
-
-
-  const initials =
-    profile.full_name
-
-      .split(' ')
-
-      .filter(Boolean)
-
-      .slice(0, 2)
-
-      .map(
-        word => word[0]
-      )
-
-      .join('')
-
-      .toUpperCase();
-
-
-  if ($('#user-avatar')) {
-
-    $('#user-avatar')
-      .textContent =
-      initials || 'US';
-
-  }
-
-
-  if ($('#dashboard-greeting')) {
-
-    $('#dashboard-greeting')
-      .textContent =
-      `Selamat pagi, ${profile.full_name.split(' ')[0]}.`;
-
-  }
-
-
-  ensureSignupRoleField();
-
-  ensureAdminView();
-
-  addAdminNavigation();
-
-  showApp();
-
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-async function logout() {
-
-  const {
-    error
-  } =
-    await supabaseClient.auth
-      .signOut();
-
-
-  if (error) {
-
-    console.error(error);
-
-    toast(
-      error.message
-    );
-
-    return;
-
-  }
-
-
-  currentProfile =
+  stream =
     null;
 
 
+  $('#camera-feed')
+    ?.classList.remove(
+      'live'
+    );
+
+
+  $('#camera-placeholder')
+    ?.classList.remove(
+      'hidden'
+    );
+
+
+  if (
+    $('#camera-button')
+  ) {
+
+    $('#camera-button')
+      .textContent =
+      'Aktifkan kamera';
+
+  }
+
+
+  if (
+    $('#detect-button')
+  ) {
+
+    $('#detect-button')
+      .disabled =
+      true;
+
+
+    $('#detect-button')
+      .classList.add(
+        'disabled'
+      );
+
+  }
+
+
+  $('#detection-box')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  $('#scanline')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  detected =
+    false;
+
+}
+
+
+/* =========================================================
+   MOCK AI DETECTION
+========================================================= */
+
+function runDetection() {
+
+  if (!stream) {
+
+    toast(
+      'Aktifkan kamera terlebih dahulu.'
+    );
+
+    return;
+
+  }
+
+
+  detected =
+    true;
+
+
+  $('#detection-box')
+    ?.classList.remove(
+      'hidden'
+    );
+
+
+  $('#scanline')
+    ?.classList.remove(
+      'hidden'
+    );
+
+
+  $('#result-empty')
+    ?.classList.add(
+      'hidden'
+    );
+
+
+  $('#result-found')
+    ?.classList.remove(
+      'hidden'
+    );
+
+
+  const now =
+
+    new Date()
+      .toLocaleTimeString(
+        'id-ID',
+        {
+
+          hour:
+            '2-digit',
+
+          minute:
+            '2-digit'
+
+        }
+      );
+
+
+  $('#scan-time')
+    .textContent =
+    now;
+
+
+  $('#camera-status')
+    .textContent =
+    'Objek terdeteksi · 94% keyakinan';
+
+}
+
+
+/* =========================================================
+   SAVE SCAN RESULT
+========================================================= */
+
+function saveResult() {
+
+  if (!detected) {
+
+    toast(
+      'Aktifkan kamera dan deteksi barang terlebih dahulu.'
+    );
+
+    return;
+
+  }
+
+
+  const online =
+    navigator.onLine;
+
+
+  const time =
+    $('#scan-time')
+      ?.textContent
+    || '--';
+
+
+  const room =
+    $('#room-select')
+      ?.value
+    || 'Lokasi belum dipilih';
+
+
+  history.unshift({
+
+    item:
+      'Monitor LED',
+
+    room,
+
+    time,
+
+    status:
+      'matched',
+
+    sync:
+      online,
+
+    icon:
+      '▰'
+
+  });
+
+
+  saveHistory();
+
+
+  activity();
+
+
+  renderHistory();
+
+
+  updateStats();
+
+
+  $('#sync-state')
+    .textContent =
+
+    online
+      ? 'Tersinkron'
+      : 'Tersimpan lokal';
+
+
+  toast(
+
+    online
+
+      ? 'Hasil scan disimpan dan tersinkron.'
+
+      : 'Hasil scan aman disimpan di perangkat.'
+
+  );
+
+
+  detected =
+    false;
+
+}
+
+
+/* =========================================================
+   CONNECTION
+========================================================= */
+
+function setConnection() {
+
+  const online =
+    navigator.onLine;
+
+
+  const dot =
+    $('#connection-dot');
+
+
+  const text =
+    $('#connection-text');
+
+
+  if (dot) {
+
+    dot.style.background =
+      online
+        ? '#54ad70'
+        : '#d69441';
+
+  }
+
+
+  if (text) {
+
+    text.textContent =
+
+      online
+
+        ? 'Online · tersinkron'
+
+        : 'Offline · data disimpan lokal';
+
+  }
+
+
+  if (!online) {
+
+    $('#camera-status')
+      ?.textContent =
+      'Offline · deteksi AI membutuhkan koneksi';
+
+  }
+
+}
+
+
+/* =========================================================
+   USER MENU
+========================================================= */
+
+function toggleUserMenu() {
+
+  const menu =
+    $('#user-menu');
+
+
+  if (!menu) {
+    return;
+  }
+
+
+  const isHidden =
+    menu.classList
+      .contains(
+        'hidden'
+      );
+
+
+  menu.classList.toggle(
+    'hidden'
+  );
+
+
+  $('#user-menu-button')
+    ?.setAttribute(
+
+      'aria-expanded',
+
+      String(
+        isHidden
+      )
+
+    );
+
+}
+
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+function openProfile() {
+
   $('#user-menu')
-    ?.classList.add('hidden');
+    ?.classList.add(
+      'hidden'
+    );
 
 
   $('#user-menu-button')
@@ -1668,1571 +1927,413 @@ async function logout() {
     );
 
 
-  showLogin();
-
   toast(
-    'Anda telah logout.'
+    'Halaman profil akan tersedia pada tahap berikutnya.'
   );
 
 }
 
 
 /* =========================================================
-   ROUTING
+   EXPORT CSV
 ========================================================= */
 
-function route(name) {
+function exportHistory() {
 
-  const validRoutes = [
+  const rows = [
 
-    'dashboard',
+    [
+      'Barang',
+      'Lokasi',
+      'Waktu',
+      'Status'
+    ],
 
-    'scan',
+    ...history.map(
 
-    'history',
+      row => [
 
-    'training',
+        row.item,
+        row.room,
+        row.time,
+        row.status
 
-    'catalog',
+      ]
 
-    'admin'
+    )
 
   ];
 
 
-  if (
-    !validRoutes.includes(name)
-  ) {
-
-    name =
-      'dashboard';
-
-  }
-
-
-  if (
-    name === 'admin'
-  ) {
-
-    if (
-      !isAdminProfile(
-        currentProfile
-      )
-    ) {
-
-      toast(
-        'Akses Admin diperlukan.'
-      );
-
-      name =
-        'dashboard';
-
-    } else {
-
-      ensureAdminView();
-
-      loadAdminPanel();
-
-    }
-
-  }
-
-
-  $$('.view')
-    .forEach(view => {
-
-      view.classList.toggle(
-
-        'active',
-
-        view.id === name
-
-      );
-
-    });
-
-
-  $$('.nav-link')
-    .forEach(link => {
-
-      link.classList.toggle(
-
-        'active',
-
-        link.dataset.route === name
-
-      );
-
-    });
-
-
-  const breadcrumbs = {
-
-    dashboard:
-      'Beranda',
-
-    scan:
-      'Verifikasi aset',
-
-    history:
-      'Riwayat scan',
-
-    training:
-      'Data training',
-
-    catalog:
-      'Katalog ruang',
-
-    admin:
-      'Manajemen pengguna'
-
-  };
-
-
-  if ($('#breadcrumb')) {
-
-    $('#breadcrumb')
-      .textContent =
-      breadcrumbs[name];
-
-  }
-
-
-  $('.sidebar')
-    ?.classList.remove(
-      'open'
-    );
-
-
-  if (
-    name !== 'scan'
-  ) {
-
-    stopCamera();
-
-  }
-
-
-  window.scrollTo({
-
-    top: 0,
-
-    behavior: 'smooth'
-
-  });
-
-}
-
-
-/* =========================================================
-   DASHBOARD ACTIVITY
-========================================================= */
-
-function activity() {
-
-  const el =
-    $('#activity-list');
-
-  if (!el) return;
-
-
-  el.innerHTML =
-
-    history
-
-      .slice(0, 4)
-
-      .map(row => `
-
-        <div
-          class="activity-row"
-        >
-
-          <div
-            class="activity-icon"
-          >
-            ${row.icon}
-          </div>
-
-          <div
-            class="activity-copy"
-          >
-
-            <strong>
-              ${row.item}
-            </strong>
-
-            <small>
-              ${row.room}
-              · Hari ini,
-              ${row.time}
-            </small>
-
-          </div>
-
-
-          <span
-            class="status ${
-              row.status === 'matched'
-                ? 'ok'
-                : 'warn'
-            }"
-          >
-
-            ${
-              row.status === 'matched'
-                ? 'SESUAI'
-                : 'DITINJAU'
-            }
-
-          </span>
-
-        </div>
-
-      `)
-
-      .join('');
-
-}
-
-
-/* =========================================================
-   HISTORY
-========================================================= */
-
-function renderHistory() {
-
-  const search =
-    $('#history-search');
-
-  const statusFilter =
-    $('#status-filter');
-
-  const body =
-    $('#history-body');
-
-  if (!search || !statusFilter || !body) {
-    return;
-  }
-
-
-  const q =
-    search.value
-      .toLowerCase();
-
-
-  const filter =
-    statusFilter.value;
-
-
-  const rows =
-    history.filter(row =>
-
-      (
-        filter === 'all' ||
-        row.status === filter
-      )
-
-      &&
-
-      `${row.item} ${row.room}`
-        .toLowerCase()
-        .includes(q)
-
-    );
-
-
-  body.innerHTML =
+  const csv =
 
     rows
 
-      .map(row => `
-
-        <tr>
-
-          <td>
-
-            <div
-              class="table-item"
-            >
-
-              <span
-                class="mini-item"
-              >
-                ${row.icon}
-              </span>
-
-              <strong>
-                ${row.item}
-              </strong>
-
-            </div>
-
-          </td>
-
-
-          <td>
-            ${row.room}
-          </td>
-
-
-          <td>
-            Hari ini,
-            ${row.time}
-          </td>
-
-
-          <td>
-
-            <span
-              class="status ${
-                row.status === 'matched'
-                  ? 'ok'
-                  : 'warn'
-              }"
-            >
-
-              ${
-                row.status === 'matched'
-                  ? 'SESUAI KATALOG'
-                  : 'PERLU DITINJAU'
-              }
-
-            </span>
-
-          </td>
-
-
-          <td>
-
-            <span
-              class="sync"
-            >
-
-              ${
-                row.sync
-                  ? '● Tersinkron'
-                  : '◌ Menunggu sync'
-              }
-
-            </span>
-
-          </td>
-
-        </tr>
-
-      `)
-
-      .join('')
-
-      ||
-
-      `
-
-        <tr>
-
-          <td
-            colspan="5"
-            style="
-              text-align:center;
-              padding:32px
-            "
-          >
-
-            Tidak ada hasil
-            yang cocok.
-
-          </td>
-
-        </tr>
-
-      `;
-
-}
-
-
-/* =========================================================
-   CATALOG
-========================================================= */
-
-function renderCatalog() {
-
-  const grid =
-    $('#catalog-grid');
-
-  if (!grid) return;
-
-
-  grid.innerHTML =
-
-    catalog
-
       .map(
-        ([name, detail, icon]) => `
 
-          <article
-            class="panel catalog-card"
-          >
+        row =>
 
-            <div
-              class="item-thumb monitor-thumb"
-            >
-              ${icon}
-            </div>
+          row
+            .map(
 
-            <h3>
-              ${name}
-            </h3>
+              value =>
 
-            <p>
-              ${detail}
-            </p>
+                `"${String(value)
+                  .replace(/"/g, '""')}"`
 
-            <small>
-              TERDAFTAR DI RUANG
-            </small>
+            )
 
-          </article>
+            .join(',')
 
-        `
       )
 
-      .join('');
-
-}
+      .join('\n');
 
 
-/* =========================================================
-   DASHBOARD STATS
-========================================================= */
+  const url =
 
-function updateStats() {
+    URL.createObjectURL(
 
-  const saved =
-    history.length -
-    initialHistory.length;
+      new Blob(
 
+        [csv],
 
-  if (saved > 0) {
+        {
+          type:
+            'text/csv;charset=utf-8;'
+        }
 
-    if ($('#scan-total')) {
+      )
 
-      $('#scan-total')
-        .textContent =
-        24 + saved;
-
-    }
+    );
 
 
-    if ($('#matched-total')) {
-
-      $('#matched-total')
-        .textContent =
-        21 +
-
-        history.filter(
-          x =>
-            !initialHistory.includes(x) &&
-            x.status === 'matched'
-        ).length;
-
-    }
-
-  }
-
-}
-
-/* =========================================================
-   AUTH UI
-========================================================= */
-
-function showLogin() {
-
-  $('#login-view')
-    ?.classList.remove('hidden');
-
-  $('#signup-view')
-    ?.classList.add('hidden');
-
-  $('#app-shell')
-    ?.classList.add('auth-mode');
-
-  $$('.view')
-    .forEach(view => {
-
-      view.classList.remove(
-        'active'
-      );
-
-    });
-
-}
+  const a =
+    document.createElement(
+      'a'
+    );
 
 
-function showSignup() {
-
-  $('#login-view')
-    ?.classList.add('hidden');
-
-  $('#signup-view')
-    ?.classList.remove('hidden');
-
-  $('#app-shell')
-    ?.classList.add('auth-mode');
-
-  ensureSignupRoleField();
-
-}
+  a.href =
+    url;
 
 
-function showApp() {
+  a.download =
+    'aikon-riwayat-scan.csv';
 
-  $('#login-view')
-    ?.classList.add('hidden');
 
-  $('#signup-view')
-    ?.classList.add('hidden');
+  document.body
+    .appendChild(a);
 
-  $('#app-shell')
-    ?.classList.remove('auth-mode');
 
-  route(
-    location.hash.slice(1)
-      || 'dashboard'
+  a.click();
+
+
+  a.remove();
+
+
+  URL.revokeObjectURL(
+    url
   );
 
 }
 
 
 /* =========================================================
-   SIGN UP
+   TRAINING CHOICES
 ========================================================= */
 
-async function signUp() {
+function setupTrainingChoices() {
 
-  const fullName =
-    $('#signup-name')
-      ?.value
-      .trim();
+  $$('.choice')
+    .forEach(
 
-  const username =
-    $('#signup-username')
-      ?.value
-      .trim()
-      .toLowerCase();
+      button => {
 
-  const email =
-    $('#signup-email')
-      ?.value
-      .trim();
+        button.addEventListener(
 
-  const password =
-    $('#signup-password')
-      ?.value;
+          'click',
 
-  const requestedRole =
-    $('#signup-role')
-      ?.value;
+          () => {
 
+            $$('.choice')
+              .forEach(
 
-  if (
-    !fullName ||
-    !username ||
-    !email ||
-    !password ||
-    !requestedRole
-  ) {
+                item => {
 
-    toast(
-      'Lengkapi semua data dan pilih role.'
-    );
+                  item.classList.toggle(
 
-    return;
+                    'active',
 
-  }
+                    item === button
+
+                  );
+
+                }
+
+              );
 
 
-  if (
-    requestedRole === 'Admin'
-  ) {
+            const isNew =
 
-    toast(
-      'Role Admin hanya dapat diberikan oleh Admin.'
-    );
-
-    return;
-
-  }
+              button.dataset.training
+              === 'new';
 
 
-  if (username.length < 3) {
-
-    toast(
-      'Username minimal 3 karakter.'
-    );
-
-    return;
-
-  }
+            $('#training-category-wrap')
+              ?.classList.toggle(
+                'hidden',
+                isNew
+              );
 
 
-  if (
-    !/^[a-z0-9._-]+$/.test(
-      username
-    )
-  ) {
+            $('#new-category-wrap')
+              ?.classList.toggle(
+                'hidden',
+                !isNew
+              );
 
-    toast(
-      'Username hanya boleh menggunakan huruf, angka, titik, underscore, atau strip.'
-    );
+          }
 
-    return;
-
-  }
-
-
-  if (password.length < 6) {
-
-    toast(
-      'Password minimal 6 karakter.'
-    );
-
-    return;
-
-  }
-
-
-  /*
-    IMPORTANT:
-
-    Do NOT insert into profiles manually.
-
-    The Supabase database trigger created earlier
-    automatically creates:
-
-    profiles
-    +
-    registration_requests
-
-    from the metadata below.
-  */
-
-  const {
-    data,
-    error
-  } =
-    await supabaseClient.auth.signUp({
-
-      email,
-
-      password,
-
-      options: {
-
-        data: {
-
-          full_name:
-            fullName,
-
-          username:
-            username,
-
-          requested_role:
-            requestedRole
-
-        }
+        );
 
       }
 
-    });
-
-
-  if (error) {
-
-    console.error(error);
-
-    toast(
-      error.message
     );
 
+}
+
+
+/* =========================================================
+   TRAINING UPLOAD
+========================================================= */
+
+function setupTrainingUpload() {
+
+  const dropZone =
+    $('#drop-zone');
+
+
+  const input =
+    $('#photo-input');
+
+
+  if (!dropZone || !input) {
     return;
-
   }
 
 
-  if (!data.user) {
+  dropZone.addEventListener(
 
-    toast(
-      'Registrasi gagal.'
-    );
+    'click',
 
-    return;
+    () => {
 
-  }
+      input.click();
 
+    }
 
-  /*
-    If email confirmation is enabled,
-    session will be null.
-
-    If session exists, immediately sign out
-    because approval is still required.
-  */
-
-  if (data.session) {
-
-    await supabaseClient.auth.signOut();
-
-  }
-
-
-  $('#signup-name')
-    .value = '';
-
-  $('#signup-username')
-    .value = '';
-
-  $('#signup-email')
-    .value = '';
-
-  $('#signup-password')
-    .value = '';
-
-  if ($('#signup-role')) {
-
-    $('#signup-role')
-      .value = '';
-
-  }
-
-
-  toast(
-    'Registrasi berhasil. Tunggu approval Admin.'
   );
 
-  showLogin();
 
-}
+  input.addEventListener(
 
+    'change',
 
-/* =========================================================
-   LOGIN
-========================================================= */
+    event => {
 
-async function login() {
+      const count =
+        event.target.files.length;
 
-  const email =
-    $('#login-email')
-      ?.value
-      .trim();
 
-  const password =
-    $('#login-password')
-      ?.value;
+      $('#photo-count')
+        .textContent =
 
+        count
 
-  if (!email || !password) {
+          ? `${count} foto siap diunggah`
 
-    toast(
-      'Masukkan email dan password.'
-    );
-
-    return;
-
-  }
-
-
-  const {
-    error
-  } =
-    await supabaseClient.auth
-      .signInWithPassword({
-
-        email,
-
-        password
-
-      });
-
-
-  if (error) {
-
-    console.error(error);
-
-    toast(
-      error.message
-    );
-
-    return;
-
-  }
-
-
-  $('#login-email')
-    .value = '';
-
-  $('#login-password')
-    .value = '';
-
-
-  await loadUser();
-
-}
-
-
-/* =========================================================
-   LOAD CURRENT USER
-========================================================= */
-
-async function loadUser() {
-
-  const {
-    data: {
-      user
-    }
-  } =
-    await supabaseClient.auth
-      .getUser();
-
-
-  if (!user) {
-
-    currentProfile = null;
-
-    showLogin();
-
-    return;
-
-  }
-
-
-  const {
-    data: profile,
-    error
-  } =
-    await supabaseClient
-
-      .from('profiles')
-
-      .select(
-        `
-        id,
-        username,
-        full_name,
-        email,
-        requested_role,
-        role,
-        approval_status
-        `
-      )
-
-      .eq(
-        'id',
-        user.id
-      )
-
-      .single();
-
-
-  if (error || !profile) {
-
-    console.error(error);
-
-    toast(
-      'Profil user tidak ditemukan.'
-    );
-
-    await supabaseClient.auth
-      .signOut();
-
-    showLogin();
-
-    return;
-
-  }
-
-
-  currentProfile =
-    profile;
-
-
-  /*
-    APPROVAL GATE
-  */
-
-  if (
-    profile.approval_status !==
-    'approved'
-  ) {
-
-    await supabaseClient.auth
-      .signOut();
-
-
-    if (
-      profile.approval_status ===
-      'pending'
-    ) {
-
-      toast(
-        'Akun masih menunggu approval Admin.'
-      );
-
-    } else if (
-      profile.approval_status ===
-      'declined'
-    ) {
-
-      toast(
-        'Registrasi Anda ditolak Admin.'
-      );
-
-    } else {
-
-      toast(
-        'Akun belum disetujui.'
-      );
+          : 'Belum ada foto dipilih';
 
     }
 
-
-    showLogin();
-
-    return;
-
-  }
+  );
 
 
-  /*
-    DISPLAY USER
-  */
+  [
+    'dragenter',
+    'dragover'
+  ]
 
-  if ($('#user-name')) {
+    .forEach(
 
-    $('#user-name')
-      .textContent =
-      profile.full_name;
+      type => {
 
-  }
+        dropZone.addEventListener(
 
+          type,
 
-  if ($('#user-role')) {
+          event => {
 
-    $('#user-role')
-      .textContent =
-      profile.role;
+            event.preventDefault();
 
-  }
+            dropZone.classList.add(
+              'drag'
+            );
 
+          }
 
-  const initials =
-    profile.full_name
+        );
 
-      .split(' ')
+      }
 
-      .filter(Boolean)
-
-      .slice(0, 2)
-
-      .map(
-        word => word[0]
-      )
-
-      .join('')
-
-      .toUpperCase();
-
-
-  if ($('#user-avatar')) {
-
-    $('#user-avatar')
-      .textContent =
-      initials || 'US';
-
-  }
-
-
-  if ($('#dashboard-greeting')) {
-
-    $('#dashboard-greeting')
-      .textContent =
-      `Selamat pagi, ${profile.full_name.split(' ')[0]}.`;
-
-  }
-
-
-  ensureSignupRoleField();
-
-  ensureAdminView();
-
-  addAdminNavigation();
-
-  showApp();
-
-}
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-async function logout() {
-
-  const {
-    error
-  } =
-    await supabaseClient.auth
-      .signOut();
-
-
-  if (error) {
-
-    console.error(error);
-
-    toast(
-      error.message
-    );
-
-    return;
-
-  }
-
-
-  currentProfile =
-    null;
-
-
-  $('#user-menu')
-    ?.classList.add('hidden');
-
-
-  $('#user-menu-button')
-    ?.setAttribute(
-      'aria-expanded',
-      'false'
     );
 
 
-  showLogin();
+  [
+    'dragleave',
+    'drop'
+  ]
 
-  toast(
-    'Anda telah logout.'
+    .forEach(
+
+      type => {
+
+        dropZone.addEventListener(
+
+          type,
+
+          event => {
+
+            event.preventDefault();
+
+            dropZone.classList.remove(
+              'drag'
+            );
+
+          }
+
+        );
+
+      }
+
+    );
+
+
+  dropZone.addEventListener(
+
+    'drop',
+
+    event => {
+
+      const files =
+        event.dataTransfer.files;
+
+
+      const count =
+        files.length;
+
+
+      $('#photo-count')
+        .textContent =
+
+        count
+
+          ? `${count} foto siap diunggah`
+
+          : 'Belum ada foto dipilih';
+
+    }
+
   );
 
 }
 
 
 /* =========================================================
-   ROUTING
+   TRAINING SUBMIT
 ========================================================= */
 
-function route(name) {
+function submitTraining() {
 
-  const validRoutes = [
-
-    'dashboard',
-
-    'scan',
-
-    'history',
-
-    'training',
-
-    'catalog',
-
-    'admin'
-
-  ];
+  const countText =
+    $('#photo-count')
+      ?.textContent
+    || '';
 
 
   if (
-    !validRoutes.includes(name)
+    countText
+      === 'Belum ada foto dipilih'
   ) {
 
-    name =
-      'dashboard';
-
-  }
-
-
-  if (
-    name === 'admin'
-  ) {
-
-    if (
-      !isAdminProfile(
-        currentProfile
-      )
-    ) {
-
-      toast(
-        'Akses Admin diperlukan.'
-      );
-
-      name =
-        'dashboard';
-
-    } else {
-
-      ensureAdminView();
-
-      loadAdminPanel();
-
-    }
-
-  }
-
-
-  $$('.view')
-    .forEach(view => {
-
-      view.classList.toggle(
-
-        'active',
-
-        view.id === name
-
-      );
-
-    });
-
-
-  $$('.nav-link')
-    .forEach(link => {
-
-      link.classList.toggle(
-
-        'active',
-
-        link.dataset.route === name
-
-      );
-
-    });
-
-
-  const breadcrumbs = {
-
-    dashboard:
-      'Beranda',
-
-    scan:
-      'Verifikasi aset',
-
-    history:
-      'Riwayat scan',
-
-    training:
-      'Data training',
-
-    catalog:
-      'Katalog ruang',
-
-    admin:
-      'Manajemen pengguna'
-
-  };
-
-
-  if ($('#breadcrumb')) {
-
-    $('#breadcrumb')
-      .textContent =
-      breadcrumbs[name];
-
-  }
-
-
-  $('.sidebar')
-    ?.classList.remove(
-      'open'
+    toast(
+      'Tambahkan minimal 5 foto sebelum dikirim.'
     );
 
-
-  if (
-    name !== 'scan'
-  ) {
-
-    stopCamera();
-
-  }
-
-
-  window.scrollTo({
-
-    top: 0,
-
-    behavior: 'smooth'
-
-  });
-
-}
-
-
-/* =========================================================
-   DASHBOARD ACTIVITY
-========================================================= */
-
-function activity() {
-
-  const el =
-    $('#activity-list');
-
-  if (!el) return;
-
-
-  el.innerHTML =
-
-    history
-
-      .slice(0, 4)
-
-      .map(row => `
-
-        <div
-          class="activity-row"
-        >
-
-          <div
-            class="activity-icon"
-          >
-            ${row.icon}
-          </div>
-
-          <div
-            class="activity-copy"
-          >
-
-            <strong>
-              ${row.item}
-            </strong>
-
-            <small>
-              ${row.room}
-              · Hari ini,
-              ${row.time}
-            </small>
-
-          </div>
-
-
-          <span
-            class="status ${
-              row.status === 'matched'
-                ? 'ok'
-                : 'warn'
-            }"
-          >
-
-            ${
-              row.status === 'matched'
-                ? 'SESUAI'
-                : 'DITINJAU'
-            }
-
-          </span>
-
-        </div>
-
-      `)
-
-      .join('');
-
-}
-
-
-/* =========================================================
-   HISTORY
-========================================================= */
-
-function renderHistory() {
-
-  const search =
-    $('#history-search');
-
-  const statusFilter =
-    $('#status-filter');
-
-  const body =
-    $('#history-body');
-
-  if (!search || !statusFilter || !body) {
     return;
+
   }
 
 
-  const q =
-    search.value
-      .toLowerCase();
-
-
-  const filter =
-    statusFilter.value;
-
-
-  const rows =
-    history.filter(row =>
-
-      (
-        filter === 'all' ||
-        row.status === filter
-      )
-
-      &&
-
-      `${row.item} ${row.room}`
-        .toLowerCase()
-        .includes(q)
-
-    );
-
-
-  body.innerHTML =
-
-    rows
-
-      .map(row => `
-
-        <tr>
-
-          <td>
-
-            <div
-              class="table-item"
-            >
-
-              <span
-                class="mini-item"
-              >
-                ${row.icon}
-              </span>
-
-              <strong>
-                ${row.item}
-              </strong>
-
-            </div>
-
-          </td>
-
-
-          <td>
-            ${row.room}
-          </td>
-
-
-          <td>
-            Hari ini,
-            ${row.time}
-          </td>
-
-
-          <td>
-
-            <span
-              class="status ${
-                row.status === 'matched'
-                  ? 'ok'
-                  : 'warn'
-              }"
-            >
-
-              ${
-                row.status === 'matched'
-                  ? 'SESUAI KATALOG'
-                  : 'PERLU DITINJAU'
-              }
-
-            </span>
-
-          </td>
-
-
-          <td>
-
-            <span
-              class="sync"
-            >
-
-              ${
-                row.sync
-                  ? '● Tersinkron'
-                  : '◌ Menunggu sync'
-              }
-
-            </span>
-
-          </td>
-
-        </tr>
-
-      `)
-
-      .join('')
-
-      ||
-
-      `
-
-        <tr>
-
-          <td
-            colspan="5"
-            style="
-              text-align:center;
-              padding:32px
-            "
-          >
-
-            Tidak ada hasil
-            yang cocok.
-
-          </td>
-
-        </tr>
-
-      `;
+  toast(
+    'Data training dikirim untuk review admin.'
+  );
 
 }
 
-
-/* =========================================================
-   CATALOG
-========================================================= */
-
-function renderCatalog() {
-
-  const grid =
-    $('#catalog-grid');
-
-  if (!grid) return;
-
-
-  grid.innerHTML =
-
-    catalog
-
-      .map(
-        ([name, detail, icon]) => `
-
-          <article
-            class="panel catalog-card"
-          >
-
-            <div
-              class="item-thumb monitor-thumb"
-            >
-              ${icon}
-            </div>
-
-            <h3>
-              ${name}
-            </h3>
-
-            <p>
-              ${detail}
-            </p>
-
-            <small>
-              TERDAFTAR DI RUANG
-            </small>
-
-          </article>
-
-        `
-      )
-
-      .join('');
-
-}
-
-
-/* =========================================================
-   DASHBOARD STATS
-========================================================= */
-
-function updateStats() {
-
-  const saved =
-    history.length -
-    initialHistory.length;
-
-
-  if (saved > 0) {
-
-    if ($('#scan-total')) {
-
-      $('#scan-total')
-        .textContent =
-        24 + saved;
-
-    }
-
-
-    if ($('#matched-total')) {
-
-      $('#matched-total')
-        .textContent =
-        21 +
-
-        history.filter(
-          x =>
-            !initialHistory.includes(x) &&
-            x.status === 'matched'
-        ).length;
-
-    }
-
-  }
-
-}
 
 /* =========================================================
    EVENT LISTENERS
 ========================================================= */
 
 document.addEventListener(
+
   'DOMContentLoaded',
+
   () => {
 
 
-    /* -----------------------------------------------------
-       AUTH ROLE FIELD
-    ----------------------------------------------------- */
-
-    ensureSignupRoleField();
-
-
-    /* -----------------------------------------------------
+    /* ===================================================
        NAVIGATION
-    ----------------------------------------------------- */
+    ==================================================== */
 
     $$('[data-route]')
-      .forEach(link => {
+      .forEach(
 
-        link.addEventListener(
-          'click',
-          event => {
+        link => {
 
-            event.preventDefault();
+          link.addEventListener(
 
-            route(
-              link.dataset.route
-            );
+            'click',
 
-          }
-        );
+            event => {
 
-      });
+              event.preventDefault();
 
 
-    /* -----------------------------------------------------
+              route(
+                link.dataset.route
+              );
+
+            }
+
+          );
+
+        }
+
+      );
+
+
+    /* ===================================================
        MOBILE MENU
-    ----------------------------------------------------- */
+    ==================================================== */
 
     $('.mobile-menu')
       ?.addEventListener(
+
         'click',
+
         () => {
 
           $('.sidebar')
@@ -3241,386 +2342,222 @@ document.addEventListener(
             );
 
         }
+
       );
 
 
-    /* -----------------------------------------------------
+    /* ===================================================
        CATALOG
-    ----------------------------------------------------- */
+    ==================================================== */
 
     $('#show-catalog')
       ?.addEventListener(
+
         'click',
+
         () =>
-          route('catalog')
+          route(
+            'catalog'
+          )
+
       );
 
 
     $('#catalog-location')
       ?.addEventListener(
+
         'click',
+
         () =>
-          route('scan')
+          route(
+            'scan'
+          )
+
       );
 
 
-    /* -----------------------------------------------------
+    /* ===================================================
        CAMERA
-    ----------------------------------------------------- */
+    ==================================================== */
 
     $('#camera-button')
       ?.addEventListener(
+
         'click',
-        () => {
+
+        () =>
 
           stream
-            ? stopCamera()
-            : startCamera();
 
-        }
+            ? stopCamera()
+
+            : startCamera()
+
       );
 
 
     $('#detect-button')
       ?.addEventListener(
+
         'click',
+
         runDetection
+
       );
 
 
     $('#save-result')
       ?.addEventListener(
+
         'click',
+
         saveResult
+
       );
 
 
-    /* -----------------------------------------------------
+    /* ===================================================
        HISTORY
-    ----------------------------------------------------- */
+    ==================================================== */
 
     $('#history-search')
       ?.addEventListener(
+
         'input',
+
         renderHistory
+
       );
 
 
     $('#status-filter')
       ?.addEventListener(
+
         'change',
+
         renderHistory
+
       );
 
 
-    /* -----------------------------------------------------
-       TRAINING
-    ----------------------------------------------------- */
-
-    $$('.choice')
-      .forEach(button => {
-
-        button.addEventListener(
-          'click',
-          () => {
-
-            $$('.choice')
-              .forEach(
-                item =>
-                  item.classList.toggle(
-                    'active',
-                    item === button
-                  )
-              );
-
-
-            $('#training-category-wrap')
-              ?.classList.toggle(
-                'hidden',
-                button.dataset.training === 'new'
-              );
-
-
-            $('#new-category-wrap')
-              ?.classList.toggle(
-                'hidden',
-                button.dataset.training !== 'new'
-              );
-
-          }
-        );
-
-      });
-
-
-    /* -----------------------------------------------------
-       UPLOAD
-    ----------------------------------------------------- */
-
-    $('#drop-zone')
+    $('#export-button')
       ?.addEventListener(
+
         'click',
-        () =>
-          $('#photo-input')
-            ?.click()
+
+        exportHistory
+
       );
 
 
-    $('#photo-input')
-      ?.addEventListener(
-        'change',
-        event => {
+    /* ===================================================
+       TRAINING
+    ==================================================== */
 
-          const count =
-            event.target.files.length;
+    setupTrainingChoices();
 
 
-          if ($('#photo-count')) {
-
-            $('#photo-count')
-              .textContent =
-
-              count
-
-                ? `${count} foto siap diunggah`
-
-                : 'Belum ada foto dipilih';
-
-          }
-
-        }
-      );
-
-
-    ['dragenter', 'dragover']
-      .forEach(type => {
-
-        $('#drop-zone')
-          ?.addEventListener(
-            type,
-            event => {
-
-              event.preventDefault();
-
-              $('#drop-zone')
-                ?.classList.add(
-                  'drag'
-                );
-
-            }
-          );
-
-      });
-
-
-    ['dragleave', 'drop']
-      .forEach(type => {
-
-        $('#drop-zone')
-          ?.addEventListener(
-            type,
-            event => {
-
-              event.preventDefault();
-
-              $('#drop-zone')
-                ?.classList.remove(
-                  'drag'
-                );
-
-            }
-          );
-
-      });
-
-
-    $('#drop-zone')
-      ?.addEventListener(
-        'drop',
-        event => {
-
-          const count =
-            event.dataTransfer
-              .files.length;
-
-
-          if ($('#photo-count')) {
-
-            $('#photo-count')
-              .textContent =
-
-              count
-
-                ? `${count} foto siap diunggah`
-
-                : 'Belum ada foto dipilih';
-
-          }
-
-        }
-      );
+    setupTrainingUpload();
 
 
     $('#submit-training')
       ?.addEventListener(
+
         'click',
-        () => {
 
-          const count =
-            $('#photo-count')
-              ?.textContent;
+        submitTraining
 
-
-          if (
-            !count ||
-            count ===
-            'Belum ada foto dipilih'
-          ) {
-
-            toast(
-              'Tambahkan minimal 5 foto sebelum dikirim.'
-            );
-
-          } else {
-
-            toast(
-              'Data training dikirim untuk review admin.'
-            );
-
-          }
-
-        }
       );
 
 
-    /* -----------------------------------------------------
-       EXPORT
-    ----------------------------------------------------- */
-
-    $('#export-button')
-      ?.addEventListener(
-        'click',
-        () => {
-
-          const csv = [
-
-            'Barang,Lokasi,Waktu,Status',
-
-            ...history.map(
-              row =>
-                `"${row.item}","${row.room}","${row.time}","${row.status}"`
-            )
-
-          ].join('\n');
-
-
-          const url =
-            URL.createObjectURL(
-
-              new Blob(
-
-                [csv],
-
-                {
-                  type:
-                    'text/csv'
-                }
-
-              )
-
-            );
-
-
-          const a =
-            document.createElement(
-              'a'
-            );
-
-
-          a.href =
-            url;
-
-
-          a.download =
-            'aikon-riwayat-scan.csv';
-
-
-          a.click();
-
-
-          URL.revokeObjectURL(
-            url
-          );
-
-        }
-      );
-
-
-    /* =====================================================
+    /* ===================================================
        AUTH BUTTONS
-    ====================================================== */
+    ==================================================== */
 
     $('#login-button')
       ?.addEventListener(
+
         'click',
+
         login
+
       );
 
 
     $('#signup-button')
       ?.addEventListener(
+
         'click',
+
         signUp
+
       );
 
 
     $('#show-signup')
       ?.addEventListener(
+
         'click',
+
         showSignup
+
       );
 
 
     $('#show-login')
       ?.addEventListener(
+
         'click',
+
         showLogin
+
       );
 
 
     $('#logout-button')
       ?.addEventListener(
+
         'click',
+
         logout
+
       );
 
 
     $('#profile-button')
       ?.addEventListener(
+
         'click',
+
         openProfile
+
       );
 
 
     $('#user-menu-button')
       ?.addEventListener(
+
         'click',
+
         toggleUserMenu
+
       );
 
 
-    /* -----------------------------------------------------
+    /* ===================================================
        ENTER KEY — LOGIN
-    ----------------------------------------------------- */
+    ==================================================== */
 
     $('#login-password')
       ?.addEventListener(
+
         'keydown',
+
         event => {
 
           if (
-            event.key ===
-            'Enter'
+            event.key
+            === 'Enter'
           ) {
 
             login();
@@ -3628,21 +2565,24 @@ document.addEventListener(
           }
 
         }
+
       );
 
 
-    /* -----------------------------------------------------
+    /* ===================================================
        ENTER KEY — SIGNUP
-    ----------------------------------------------------- */
+    ==================================================== */
 
     $('#signup-password')
       ?.addEventListener(
+
         'keydown',
+
         event => {
 
           if (
-            event.key ===
-            'Enter'
+            event.key
+            === 'Enter'
           ) {
 
             signUp();
@@ -3650,15 +2590,18 @@ document.addEventListener(
           }
 
         }
+
       );
 
 
-    /* -----------------------------------------------------
+    /* ===================================================
        CONNECTION
-    ----------------------------------------------------- */
+    ==================================================== */
 
     window.addEventListener(
+
       'online',
+
       () => {
 
         setConnection();
@@ -3668,11 +2611,14 @@ document.addEventListener(
         );
 
       }
+
     );
 
 
     window.addEventListener(
+
       'offline',
+
       () => {
 
         setConnection();
@@ -3682,101 +2628,76 @@ document.addEventListener(
         );
 
       }
+
     );
 
 
-    /* -----------------------------------------------------
+    /* ===================================================
        ROUTING
-    ----------------------------------------------------- */
+    ==================================================== */
 
     window.addEventListener(
+
       'hashchange',
-      () =>
+
+      () => {
+
         route(
+
           location.hash.slice(1)
           || 'dashboard'
-        )
+
+        );
+
+      }
+
     );
 
 
-    /* -----------------------------------------------------
-       AUTH STATE
-    ----------------------------------------------------- */
-
-    supabaseClient.auth
-      .onAuthStateChange(
-        async (
-          event,
-          session
-        ) => {
-
-          if (
-            event ===
-            'SIGNED_OUT'
-          ) {
-
-            stopAdminPolling();
-
-            currentProfile =
-              null;
-
-            showLogin();
-
-            return;
-
-          }
-
-
-          if (
-            event ===
-              'SIGNED_IN' &&
-            session
-          ) {
-
-            await loadUser();
-
-            startAdminPolling();
-
-          }
-
-        }
-      );
-
-
-    /* -----------------------------------------------------
+    /* ===================================================
        SERVICE WORKER
-    ----------------------------------------------------- */
+    ==================================================== */
 
     if (
-      'serviceWorker' in
-      navigator
+      'serviceWorker'
+      in navigator
     ) {
 
       window.addEventListener(
+
         'load',
+
         () => {
 
-          navigator.serviceWorker
+          navigator
+            .serviceWorker
             .register(
               './sw.js'
             )
+
             .catch(
-              error =>
+
+              error => {
+
                 console.error(
-                  'Service worker error:',
+                  'Service Worker error:',
                   error
-                )
+                );
+
+              }
+
             );
 
         }
+
       );
 
     }
 
 
-    /* -----------------------------------------------------
+    /* ===================================================
        INITIAL RENDER
-    ----------------------------------------------------- */
+    ==================================================== */
 
     activity();
 
@@ -3789,11 +2710,12 @@ document.addEventListener(
     setConnection();
 
 
-    /* -----------------------------------------------------
+    /* ===================================================
        CHECK AUTHENTICATION
-    ----------------------------------------------------- */
+    ==================================================== */
 
     loadUser();
 
   }
+
 );
