@@ -1,4 +1,6 @@
-const CACHE_NAME = 'aikon-v4-20260921';
+const CACHE_NAME = 'aikon-v5-supabase-20260921';
+const SUPABASE_URL = 'https://kiyneeejluyqzvgdfljt.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_NGf9sH1tagHPRfPJRcUvtg_vFJIPF6W';
 
 const STATIC_ASSETS = [
   './',
@@ -21,7 +23,6 @@ self.addEventListener('install', event => {
       }
     })
   );
-
   self.skipWaiting();
 });
 
@@ -33,19 +34,33 @@ self.addEventListener('activate', event => {
         .map(key => caches.delete(key))
     ))
   );
-
   self.clients.claim();
 });
 
+async function fetchAppScript(request) {
+  const response = await fetch(request);
+  if (!response.ok) return response;
+
+  const source = await response.text();
+  const updated = source
+    .replace(/https:\/\/efcyyiunxigzixfdwtzq\.supabase\.co/g, SUPABASE_URL)
+    .replace(/sb_publishable_OGJgtLKCNAupcWLGqRM52w_rP2hyq7h/g, SUPABASE_KEY);
+
+  return new Response(updated, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers
+  });
+}
+
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') {
-    return;
-  }
+  if (event.request.method !== 'GET') return;
 
   const requestUrl = new URL(event.request.url);
+  if (requestUrl.origin !== self.location.origin) return;
 
-  // Only intercept requests belonging to this application.
-  if (requestUrl.origin !== self.location.origin) {
+  if (requestUrl.pathname.endsWith('/app.js')) {
+    event.respondWith(fetchAppScript(event.request));
     return;
   }
 
@@ -53,12 +68,9 @@ self.addEventListener('fetch', event => {
     fetch(event.request)
       .then(response => {
         if (response && response.ok) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
-
         return response;
       })
       .catch(() => caches.match(event.request, { ignoreSearch: true }))
