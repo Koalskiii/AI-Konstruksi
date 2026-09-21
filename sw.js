@@ -1,8 +1,10 @@
-const CACHE_NAME = 'aikon-v3-20260917';
+const CACHE_NAME = 'aikon-v4-20260921';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './style.css',
+  './styles.css',
   './app.js',
   './manifest.webmanifest'
 ];
@@ -23,68 +25,42 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys
-          .filter(key => key.startsWith('aikon-') && key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      );
-    })
+    caches.keys().then(keys => Promise.all(
+      keys
+        .filter(key => key.startsWith('aikon-') && key !== CACHE_NAME)
+        .map(key => caches.delete(key))
+    ))
   );
 
   self.clients.claim();
 });
 
-
 self.addEventListener('fetch', event => {
-
   if (event.request.method !== 'GET') {
     return;
   }
 
   const requestUrl = new URL(event.request.url);
 
-  /*
-   * Hanya intercept request dari domain aplikasi sendiri.
-   * Supabase dan CDN tidak kita cache.
-   */
+  // Only intercept requests belonging to this application.
   if (requestUrl.origin !== self.location.origin) {
     return;
   }
 
   event.respondWith(
-
     fetch(event.request)
       .then(response => {
-
         if (response && response.ok) {
-
           const responseClone = response.clone();
-
           caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, responseClone);
           });
-
         }
 
         return response;
-
       })
-
-      .catch(() => {
-
-        return caches.match(
-          event.request,
-          {
-            ignoreSearch: true
-          }
-        );
-
-      })
-
+      .catch(() => caches.match(event.request, { ignoreSearch: true }))
   );
-
 });
