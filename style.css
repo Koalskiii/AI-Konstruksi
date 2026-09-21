@@ -1,0 +1,2 @@
+/* Compatibility entrypoint for the stylesheet referenced by index.html. */
+@import url('./styles.css');
