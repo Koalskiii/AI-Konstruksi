@@ -12,7 +12,7 @@ const SUPABASE_URL =
   'https://kiyneeejluyqzvgdfljt.supabase.co';
 
 const SUPABASE_KEY =
-  'sb_publishable_OGJgtLKCNAupcWLGqRM52w_rP2hyq7h';
+  'sb_publishable_NGf9sH1tagHPRfPJRcUvtg_vFJIPF6W';
 
 
 const supabaseClient =
