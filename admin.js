@@ -35,9 +35,11 @@
         <input name="photo" type="file" accept="image/*" multiple required>
         <button class="primary-button">Simpan foto training</button>
       </form>
-      <div class="admin-list">${training.map(row => `<div class="admin-row"><div><strong>${esc(row.label || 'Tanpa label')}</strong><small>${esc(row.status)} · ${esc(row.storage_path)}</small></div><button class="text-button danger" data-delete-training="${row.id}">Hapus</button></div>`).join('') || '<small>Belum ada foto training.</small>'}</div>
+      <div class="admin-list">${training.map(row => `<div class="admin-row"><div><strong>${esc(row.label || 'Tanpa label')}</strong><small>${esc(row.status)} · ${esc(row.storage_path)}</small></div><div style="display:flex;gap:6px"><button class="text-button" data-approve-training="${row.id}" ${row.status === 'approved' ? 'disabled' : ''}>Approve</button><button class="text-button danger" data-reject-training="${row.id}" ${row.status === 'rejected' ? 'disabled' : ''}>Reject</button><button class="text-button danger" data-delete-training="${row.id}">Hapus</button></div></div>`).join('') || '<small>Belum ada foto training.</small>'}</div>
     </section>`;
     $('#photo-form').onsubmit = upload;
+    root.querySelectorAll('[data-approve-training]').forEach(b => b.onclick = () => setTrainingStatus(b.dataset.approveTraining, 'approved'));
+    root.querySelectorAll('[data-reject-training]').forEach(b => b.onclick = () => setTrainingStatus(b.dataset.rejectTraining, 'rejected'));
     root.querySelectorAll('[data-delete-training]').forEach(b => b.onclick = () => deleteTraining(b.dataset.deleteTraining));
   }
 
@@ -52,6 +54,14 @@
       if (result.error) return notify(result.error.message);
     }
     await load(); render(); notify('Foto training tersimpan.');
+  }
+
+  async function setTrainingStatus(id, status) {
+    const result = await db.from('training_images').update({ status }).eq('id', id);
+    if (result.error) return notify(result.error.message);
+    await load();
+    render();
+    notify(status === 'approved' ? 'Foto training di-approve.' : 'Foto training di-reject.');
   }
 
   async function deleteTraining(id) {
