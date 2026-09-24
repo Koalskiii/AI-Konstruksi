@@ -2252,13 +2252,16 @@ function setupTrainingUpload() {
 
     event => {
 
-      const files =
-        event.dataTransfer.files;
+      const files = event.dataTransfer.files;
+      const count = files.length;
 
-
-      const count =
-        files.length;
-
+      try {
+        const transfer = new DataTransfer();
+        for (const file of files) transfer.items.add(file);
+        input.files = transfer.files;
+      } catch (error) {
+        console.warn('AIKON drop-file assignment failed:', error);
+      }
 
       $('#photo-count')
         .textContent =
