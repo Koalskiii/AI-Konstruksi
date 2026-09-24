@@ -540,6 +540,8 @@
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
+    $('#camera-video')?.addEventListener('loadedmetadata', updateCameraButtonState);
+
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) updateCameraButtonState();
     });
