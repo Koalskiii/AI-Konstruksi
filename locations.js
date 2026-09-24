@@ -14,9 +14,11 @@
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const notify = text => { const el = $('#toast'); if (!el) return; el.textContent = text; el.classList.remove('hidden'); setTimeout(() => el.classList.add('hidden'), 2800); };
-  const adminCheck = async () => { const { data: { user } } = await db.auth.getUser(); if (!user) return false; const result = await db.from('profiles').select('role').eq('id', user.id).single(); return !result.error && result.data?.role === 'admin'; };
+  const getRole = async () => { const { data: { user } } = await db.auth.getUser(); if (!user) return ''; const result = await db.from('profiles').select('role').eq('id', user.id).single(); return String(result.data?.role || '').toLowerCase(); };
+  const adminCheck = async () => (await getRole()) === 'admin';
+  const managementCheck = async () => ['admin','owner','pm & supervisor'].includes(await getRole());
 
-  let isAdmin = false;
+  let isAdmin = false, canManageLocations = false;
   let sites = [], buildings = [], floors = [], rooms = [], items = [];
   // view.level: 'sites' | 'buildings' | 'floors' | 'rooms' | 'items' | 'unassigned'
   const view = { level: 'sites', siteId: null, buildingId: null, floorId: null, roomId: null };
@@ -498,7 +500,7 @@
     const toolbar = `<div class="loc-toolbar loc-navigation">
       ${back ? `<button type="button" class="secondary-button loc-back-button" id="loc-back">${esc(back.label)}</button>` : '<span class="loc-location-label">Struktur lokasi</span>'}
       <span class="loc-path-label"><b>Project</b><span>›</span><b>Building</b><span>›</span><b>Floor</b><span>›</span><b>Room</b></span>
-      ${isAdmin ? `<label class="loc-checkbox"><input type="checkbox" id="loc-show-inactive" ${showInactive ? 'checked' : ''}> Tampilkan nonaktif</label>` : ''}
+      ${canManageLocations ? `<label class="loc-checkbox"><input type="checkbox" id="loc-show-inactive" ${showInactive ? 'checked' : ''}> Tampilkan nonaktif</label>` : ''}
     </div>`;
 
     let body;
@@ -551,6 +553,7 @@
 
     const addBtn = $('#loc-add');
     if (addBtn) addBtn.onclick = () => {
+      if (!canManageLocations) return;
       if (view.level === 'sites') formSite();
       else if (view.level === 'buildings') formBuilding(null, view.siteId);
       else if (view.level === 'floors') formFloor(null, view.buildingId);
@@ -558,7 +561,7 @@
       else formItem(null, view.roomId);
     };
 
-    root.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
+    root.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { if (!canManageLocations) return;
       const id = b.dataset.edit;
       if (view.level === 'sites') formSite(siteOf(id));
       else if (view.level === 'buildings') formBuilding(buildingOf(id), view.siteId);
@@ -574,8 +577,8 @@
       room: () => roomOf(id)?.name, item: () => items.find(i => i.id === id)?.name
     }[levelKey]());
 
-    root.querySelectorAll('[data-deactivate]').forEach(b => b.onclick = () => deactivate(levelKey, tableKey, b.dataset.deactivate, nameOf(b.dataset.deactivate) || ''));
-    root.querySelectorAll('[data-restore]').forEach(b => b.onclick = () => restore(tableKey, b.dataset.restore));
+    root.querySelectorAll('[data-deactivate]').forEach(b => b.onclick = () => { if (!canManageLocations) return; deactivate(levelKey, tableKey, b.dataset.deactivate, nameOf(b.dataset.deactivate) || ''); });
+    root.querySelectorAll('[data-restore]').forEach(b => b.onclick = () => { if (!canManageLocations) return; restore(tableKey, b.dataset.restore); });
   }
 
   /* ---------------------------------------------------------
@@ -585,7 +588,7 @@
   async function openCatalogHierarchy() {
     const { data: { user } } = await db.auth.getUser();
     if (!user) return;
-    isAdmin = await adminCheck();
+    isAdmin = await adminCheck(); canManageLocations = await managementCheck();
     if (!$('#catalog-grid')) return;
     if (!$('#loc-breadcrumb')) {
       $('#catalog-grid').insertAdjacentHTML('beforebegin', '<p id="loc-breadcrumb" class="loc-breadcrumb"></p>');
