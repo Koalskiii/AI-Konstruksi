@@ -297,12 +297,34 @@
 
   function breadcrumb() {
     const crumbs = [{ label: 'Semua Project', onclick: () => go('sites') }];
-    if (view.level === 'unassigned') { crumbs.push({ label: 'Item belum punya Room', onclick: () => {} }); return crumbs; }
-    if (view.siteId) { const s = siteOf(view.siteId); crumbs.push({ label: s?.name || '...', onclick: () => go('buildings', { siteId: view.siteId }) }); }
-    if (view.buildingId) { const b = buildingOf(view.buildingId); crumbs.push({ label: b?.name || '...', onclick: () => go('floors', { buildingId: view.buildingId }) }); }
-    if (view.floorId) { const f = floorOf(view.floorId); crumbs.push({ label: f?.name || '...', onclick: () => go('rooms', { floorId: view.floorId }) }); }
-    if (view.roomId) { const r = roomOf(view.roomId); crumbs.push({ label: r?.name || '...', onclick: () => go('items', { roomId: view.roomId }) }); }
+    if (view.level === 'unassigned') {
+      crumbs.push({ label: 'Item belum punya Room', onclick: () => {} });
+      return crumbs;
+    }
+    if (view.siteId) {
+      const s = siteOf(view.siteId);
+      crumbs.push({ label: s?.name || 'Project', onclick: () => go('buildings', { siteId: view.siteId }) });
+    }
+    if (view.buildingId) {
+      const b = buildingOf(view.buildingId);
+      crumbs.push({ label: b?.name || 'Building', onclick: () => go('floors', { buildingId: view.buildingId }) });
+    }
+    if (view.floorId) {
+      const f = floorOf(view.floorId);
+      crumbs.push({ label: f?.name || 'Floor', onclick: () => go('rooms', { floorId: view.floorId }) });
+    }
+    if (view.roomId) {
+      const r = roomOf(view.roomId);
+      crumbs.push({ label: r?.name || 'Room', onclick: () => {} });
+    }
     return crumbs;
+  }
+
+  function backNavigation() {
+    if (view.level === 'buildings') return { label: 'Kembali ke Semua Project', action: () => go('sites') };
+    if (view.level === 'floors') return { label: 'Kembali ke Building', action: () => go('buildings', { siteId: view.siteId }) };
+    if (view.level === 'rooms') return { label: 'Kembali ke Floor', action: () => go('floors', { buildingId: view.buildingId }) };
+    return null;
   }
 
   function go(level, patch = {}) {
@@ -371,9 +393,11 @@
     $('#loc-breadcrumb').innerHTML = bc.map((c, idx) => `<a href="#" data-crumb="${idx}">${esc(c.label)}</a>`).join(' <span class="loc-sep">/</span> ');
     $('#loc-breadcrumb').querySelectorAll('[data-crumb]').forEach(a => a.onclick = e => { e.preventDefault(); bc[Number(a.dataset.crumb)].onclick(); });
 
-    const toolbar = `<div class="loc-toolbar">
-      <span>Struktur lokasi: <b>Project → Building → Floor → Room</b></span>
-      ${isAdmin ? `<label class="loc-checkbox"><input type="checkbox" id="loc-show-inactive" ${showInactive ? 'checked' : ''}> Tampilkan yang nonaktif</label>` : ''}
+    const back = backNavigation();
+    const toolbar = `<div class="loc-toolbar loc-navigation">
+      ${back ? `<button type="button" class="secondary-button loc-back-button" id="loc-back">${esc(back.label)}</button>` : '<span class="loc-location-label">Struktur lokasi</span>'}
+      <span class="loc-path-label"><b>Project</b><span>›</span><b>Building</b><span>›</span><b>Floor</b><span>›</span><b>Room</b></span>
+      ${isAdmin ? `<label class="loc-checkbox"><input type="checkbox" id="loc-show-inactive" ${showInactive ? 'checked' : ''}> Tampilkan nonaktif</label>` : ''}
     </div>`;
 
     let body;
@@ -388,6 +412,8 @@
 
     const showInactiveBox = $('#loc-show-inactive');
     if (showInactiveBox) showInactiveBox.onchange = () => { showInactive = showInactiveBox.checked; render(); };
+    const backBtn = $('#loc-back');
+    if (backBtn) backBtn.onclick = () => backNavigation()?.action();;
 
     if (view.level === 'unassigned') { return; }
 
