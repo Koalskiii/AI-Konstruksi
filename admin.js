@@ -1,54 +1,81 @@
+/* =========================================================
+   AIKON — ADMIN: TRAINING DATASET
+   Project/Building/Floor/Room/Item CRUD moved to locations.js
+   (real forms + soft delete + Room level). This file now only
+   covers what that page doesn't: managing AI training photos.
+========================================================= */
+
 (() => {
   const URL = 'https://kiyneeejluyqzvgdfljt.supabase.co';
   const KEY = 'sb_publishable_NGf9sH1tagHPRfPJRcUvtg_vFJIPF6W';
   const db = window.supabase.createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  let project = null, projects = [], buildings = [], floors = [], items = [], training = [];
+  let project = null, projects = [], items = [], training = [];
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const notify = text => { const el = $('#toast'); if (!el) return; el.textContent = text; el.classList.remove('hidden'); setTimeout(() => el.classList.add('hidden'), 2800); };
   const adminCheck = async () => { const { data: { user } } = await db.auth.getUser(); if (!user) return false; const result = await db.from('profiles').select('role').eq('id', user.id).single(); return !result.error && result.data?.role === 'admin'; };
 
   async function load() {
-    const [p, b, f, i, t] = await Promise.all([
+    const [p, i, t] = await Promise.all([
       db.from('projects').select('*').order('name'),
-      db.from('buildings').select('*').order('name'),
-      db.from('floors').select('*').order('name'),
-      db.from('catalog_items').select('*').order('name'),
+      db.from('catalog_items').select('*').eq('is_active', true).order('name'),
       db.from('training_images').select('*').order('created_at', { ascending: false }).limit(100)
     ]);
-    for (const result of [p, b, f, i, t]) if (result.error) throw result.error;
+    for (const result of [p, i, t]) if (result.error) throw result.error;
     projects = p.data || []; project = projects.find(row => row.name === 'Sekolah Kemala Taruna Bhayangkara') || projects[0];
-    buildings = b.data || []; floors = f.data || []; items = i.data || []; training = t.data || [];
+    items = i.data || []; training = t.data || [];
   }
-
-  const projectName = id => projects.find(row => row.id === id)?.name || 'Tanpa project';
-  const buildingName = id => buildings.find(row => row.id === id)?.name || 'Tanpa gedung';
-  const floorName = id => floors.find(row => row.id === id)?.name || 'Tanpa lantai';
-  const choose = (title, rows, current = '') => { const list = rows.map(row => `${row.id} = ${row.name}`).join('\n'); return prompt(`${title}\n\n${list}\n\nMasukkan ID:`, current) || null; };
 
   function render() {
     const root = $('#admin-content'); if (!root) return;
-    root.innerHTML = `<section class="panel admin-card"><div class="panel-header"><div><span class="eyebrow">PROJECT KONSTRUKSI</span><h2>Edit & hapus project</h2><p>${esc(project?.location || '')}</p></div><button id="new-project" class="primary-button">Tambah project</button></div><div class="admin-list">${projects.map(row => `<div class="admin-row"><div><strong>${esc(row.name)}</strong><small>${esc(row.location || 'Lokasi belum diisi')}</small></div><span><button class="text-button" data-edit-project="${row.id}">Edit</button> <button class="text-button danger" data-delete-project="${row.id}">Hapus</button></span></div>`).join('')}</div></section>
-      <div class="admin-grid"><section class="panel admin-card"><div class="panel-header"><div><span class="eyebrow">STRUKTUR PROYEK</span><h2>Gedung & lantai</h2></div><button id="new-building" class="primary-button">Tambah gedung</button></div><div class="admin-list">${buildings.map(row => `<div class="admin-row"><div><strong>${esc(row.name)}</strong><small>${projectName(row.project_id)} · ${floors.filter(f => f.building_id === row.id).length} lantai</small></div><span><button class="text-button" data-edit-building="${row.id}">Edit</button> <button class="text-button" data-add-floor="${row.id}">+ Lantai</button> <button class="text-button danger" data-delete-building="${row.id}">Hapus</button></span></div>${floors.filter(f => f.building_id === row.id).map(f => `<div class="admin-row admin-child"><strong>↳ ${esc(f.name)}</strong><span><button class="text-button" data-edit-floor="${f.id}">Edit</button> <button class="text-button danger" data-delete-floor="${f.id}">Hapus</button></span></div>`).join('')}`).join('') || '<small>Belum ada gedung.</small>'}</div></section>
-      <section class="panel admin-card"><div class="panel-header"><div><span class="eyebrow">KATALOG ASET</span><h2>Item</h2></div><button id="new-item" class="primary-button">Tambah item</button></div><div class="admin-list">${items.map(row => `<div class="admin-row"><div><strong>${esc(row.name)}</strong><small>${row.quantity} unit · ${buildingName(row.building_id)} · ${floorName(row.floor_id)}</small></div><span><button class="text-button" data-edit-item="${row.id}">Edit</button> <button class="text-button danger" data-delete-item="${row.id}">Hapus</button></span></div>`).join('') || '<small>Belum ada item.</small>'}</div></section></div>
-      <section class="panel admin-card"><div class="panel-header"><div><span class="eyebrow">DATASET TRAINING AI</span><h2>Foto referensi</h2><p>File tersimpan di Storage <b>aikon-training</b>; metadata di <b>training_images</b>.</p></div></div><form id="photo-form" class="admin-form"><select name="catalog_item_id" required><option value="">Pilih item</option>${items.map(row => `<option value="${row.id}">${esc(row.name)}</option>`).join('')}</select><input name="photo" type="file" accept="image/*" multiple required><button class="primary-button">Simpan foto training</button></form><div class="admin-list">${training.map(row => `<div class="admin-row"><div><strong>${esc(row.label || 'Tanpa label')}</strong><small>${esc(row.status)} · ${esc(row.storage_path)}</small></div><button class="text-button danger" data-delete-training="${row.id}">Hapus</button></div>`).join('') || '<small>Belum ada foto training.</small>'}</div></section>`;
-    $('#new-project').onclick = newProject; $('#new-building').onclick = newBuilding; $('#new-item').onclick = newItem; $('#photo-form').onsubmit = upload;
-    root.querySelectorAll('[data-edit-project]').forEach(b => b.onclick = () => editProject(b.dataset.editProject)); root.querySelectorAll('[data-delete-project]').forEach(b => b.onclick = () => deleteProject(b.dataset.deleteProject)); root.querySelectorAll('[data-edit-building]').forEach(b => b.onclick = () => editBuilding(b.dataset.editBuilding)); root.querySelectorAll('[data-delete-building]').forEach(b => b.onclick = () => deleteRow('buildings', b.dataset.deleteBuilding, 'gedung')); root.querySelectorAll('[data-add-floor]').forEach(b => b.onclick = () => addFloor(b.dataset.addFloor)); root.querySelectorAll('[data-edit-floor]').forEach(b => b.onclick = () => editFloor(b.dataset.editFloor)); root.querySelectorAll('[data-delete-floor]').forEach(b => b.onclick = () => deleteRow('floors', b.dataset.deleteFloor, 'lantai')); root.querySelectorAll('[data-edit-item]').forEach(b => b.onclick = () => editItem(b.dataset.editItem)); root.querySelectorAll('[data-delete-item]').forEach(b => b.onclick = () => deleteRow('catalog_items', b.dataset.deleteItem, 'item')); root.querySelectorAll('[data-delete-training]').forEach(b => b.onclick = () => deleteTraining(b.dataset.deleteTraining));
+    root.innerHTML = `<section class="panel admin-card">
+      <div class="panel-header"><div><span class="eyebrow">DATASET TRAINING AI</span><h2>Foto referensi</h2><p>File tersimpan di Storage <b>aikon-training</b>; metadata di <b>training_images</b>. Item baru yang di-submit lewat halaman Data Training (kategori baru) akan otomatis muncul juga di <b>Lokasi &gt; Item belum punya Room</b> untuk diberi lokasi.</p></div></div>
+      <form id="photo-form" class="admin-form">
+        <select name="catalog_item_id" required><option value="">Pilih item</option>${items.map(row => `<option value="${row.id}">${esc(row.name)}</option>`).join('')}</select>
+        <input name="photo" type="file" accept="image/*" multiple required>
+        <button class="primary-button">Simpan foto training</button>
+      </form>
+      <div class="admin-list">${training.map(row => `<div class="admin-row"><div><strong>${esc(row.label || 'Tanpa label')}</strong><small>${esc(row.status)} · ${esc(row.storage_path)}</small></div><button class="text-button danger" data-delete-training="${row.id}">Hapus</button></div>`).join('') || '<small>Belum ada foto training.</small>'}</div>
+    </section>`;
+    $('#photo-form').onsubmit = upload;
+    root.querySelectorAll('[data-delete-training]').forEach(b => b.onclick = () => deleteTraining(b.dataset.deleteTraining));
   }
 
-  async function save(table, values, id) { const result = id ? await db.from(table).update(values).eq('id', id) : await db.from(table).insert(values); if (result.error) return notify(result.error.message); await load(); render(); notify('Berhasil disimpan.'); }
-  async function newProject() { const name = prompt('Nama project konstruksi:'); if (!name?.trim()) return; const location = prompt('Lokasi project:', 'Gunung Sindur, Bogor') || null; await save('projects', { name: name.trim(), location }); }
-  async function editProject(id) { const row = projects.find(x => x.id === id); const name = prompt('Nama project:', row.name); if (!name?.trim()) return; const location = prompt('Lokasi:', row.location || '') || null; await save('projects', { name: name.trim(), location }, id); }
-  async function deleteProject(id) { if (!confirm('Hapus project ini beserta gedung, lantai, dan itemnya?')) return; await deleteRow('projects', id, 'project'); }
-  async function newBuilding() { const name = prompt('Nama gedung:'); if (!name?.trim()) return; const projectId = choose('Pilih project', projects, project?.id); if (!projectId) return; await save('buildings', { name: name.trim(), project_id: projectId }); }
-  async function editBuilding(id) { const row = buildings.find(x => x.id === id); const name = prompt('Nama gedung:', row.name); if (!name?.trim()) return; const projectId = choose('Pilih project', projects, row.project_id); if (!projectId) return; await save('buildings', { name: name.trim(), project_id: projectId }, id); }
-  async function addFloor(buildingId) { const name = prompt('Nama lantai:'); if (!name?.trim()) return; await save('floors', { name: name.trim(), building_id: buildingId }); }
-  async function editFloor(id) { const row = floors.find(x => x.id === id); const name = prompt('Nama lantai:', row.name); if (!name?.trim()) return; const buildingId = choose('Pilih gedung', buildings, row.building_id); if (!buildingId) return; await save('floors', { name: name.trim(), building_id: buildingId }, id); }
-  async function newItem() { const name = prompt('Nama item:'); if (!name?.trim()) return; const quantity = Number(prompt('Jumlah unit:', '1') || 0); const description = prompt('Deskripsi:', '') || null; const projectId = choose('Pilih project', projects, project?.id); if (!projectId) return; const buildingId = choose('Pilih gedung (boleh kosong)', buildings) ; const floorId = choose('Pilih lantai (boleh kosong)', floors); await save('catalog_items', { name: name.trim(), quantity, description, project_id: projectId, building_id: buildingId, floor_id: floorId }); }
-  async function editItem(id) { const row = items.find(x => x.id === id); const name = prompt('Nama item:', row.name); if (!name?.trim()) return; const quantity = Number(prompt('Jumlah unit:', row.quantity) || 0); const description = prompt('Deskripsi:', row.description || '') || null; const projectId = choose('Pilih project', projects, row.project_id); if (!projectId) return; const buildingId = choose('Pilih gedung (boleh kosong)', buildings, row.building_id); const floorId = choose('Pilih lantai (boleh kosong)', floors, row.floor_id); await save('catalog_items', { name: name.trim(), quantity, description, project_id: projectId, building_id: buildingId || null, floor_id: floorId || null, updated_at: new Date().toISOString() }, id); }
-  async function deleteRow(table, id, label) { if (!confirm(`Hapus ${label} ini?`)) return; const result = await db.from(table).delete().eq('id', id); if (result.error) return notify(result.error.message); await load(); render(); notify(`${label} dihapus.`); }
-  async function upload(event) { event.preventDefault(); const form = new FormData(event.currentTarget), itemId = form.get('catalog_item_id'), user = (await db.auth.getUser()).data.user; for (const file of form.getAll('photo')) { const path = `${project.id}/${itemId}/${crypto.randomUUID()}-${file.name}`; const up = await db.storage.from('aikon-training').upload(path, file); if (up.error) return notify(up.error.message); const result = await db.from('training_images').insert({ project_id: project.id, catalog_item_id: itemId, storage_path: path, label: items.find(i => i.id === itemId)?.name || file.name, status: 'pending', created_by: user?.id }); if (result.error) return notify(result.error.message); } await load(); render(); notify('Foto training tersimpan.'); }
-  async function deleteTraining(id) { if (!confirm('Hapus metadata foto training? File Storage juga perlu dihapus manual jika diperlukan.')) return; const result = await db.from('training_images').delete().eq('id', id); if (result.error) return notify(result.error.message); await load(); render(); }
-  async function init() { if (!(await adminCheck())) return; const nav = document.querySelector('[data-route="catalog"]')?.parentElement; if (nav && !document.querySelector('[data-route="admin"]')) nav.insertAdjacentHTML('beforeend', '<a href="#admin" class="nav-link" data-route="admin"><span class="nav-icon">⚙</span><span>Admin catalog</span></a>'); const content = $('.content'); if (!content || $('#admin')) return; content.insertAdjacentHTML('beforeend', '<section id="admin" class="view"><div class="page-header"><div><span class="eyebrow">ADMINISTRATOR</span><h1>Kelola project & katalog</h1><p>Sekolah Kemala Taruna Bhayangkara · Gunung Sindur, Bogor</p></div></div><div id="admin-content"></div></section>'); document.querySelector('[data-route="admin"]').onclick = event => { event.preventDefault(); document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === 'admin')); load().then(render).catch(error => notify(error.message)); }; }
+  async function upload(event) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget), itemId = form.get('catalog_item_id'), user = (await db.auth.getUser()).data.user;
+    for (const file of form.getAll('photo')) {
+      const path = `${project.id}/${itemId}/${crypto.randomUUID()}-${file.name}`;
+      const up = await db.storage.from('aikon-training').upload(path, file);
+      if (up.error) return notify(up.error.message);
+      const result = await db.from('training_images').insert({ project_id: project.id, catalog_item_id: itemId, storage_path: path, label: items.find(i => i.id === itemId)?.name || file.name, status: 'pending', created_by: user?.id });
+      if (result.error) return notify(result.error.message);
+    }
+    await load(); render(); notify('Foto training tersimpan.');
+  }
+
+  async function deleteTraining(id) {
+    const row = training.find(t => t.id === id);
+    if (!confirm('Hapus foto training ini? File di Storage juga akan dihapus.')) return;
+    if (row?.storage_path) { const remove = await db.storage.from('aikon-training').remove([row.storage_path]); if (remove.error) notify(remove.error.message); }
+    const result = await db.from('training_images').delete().eq('id', id);
+    if (result.error) return notify(result.error.message);
+    await load(); render(); notify('Foto training dihapus.');
+  }
+
+  async function init() {
+    if (!(await adminCheck())) return;
+    const nav = document.querySelector('[data-route="catalog"]')?.parentElement;
+    if (nav && !document.querySelector('[data-route="admin"]')) nav.insertAdjacentHTML('beforeend', '<a href="#admin" class="nav-link" data-route="admin"><span class="nav-icon">⚙</span><span>Training AI</span></a>');
+    const content = $('.content'); if (!content || $('#admin')) return;
+    content.insertAdjacentHTML('beforeend', '<section id="admin" class="view"><div class="page-header"><div><span class="eyebrow">ADMINISTRATOR</span><h1>Dataset training AI</h1><p>Kelola lokasi (Site/Building/Floor/Room/Item) sekarang ada di menu <b>Lokasi</b>.</p></div></div><div id="admin-content"></div></section>');
+    document.querySelector('[data-route="admin"]').onclick = event => {
+      event.preventDefault();
+      document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === 'admin'));
+      document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.route === 'admin'));
+      load().then(render).catch(error => notify(error.message));
+    };
+  }
+
   document.addEventListener('DOMContentLoaded', () => setTimeout(() => init().catch(error => console.error('Admin UI:', error)), 1000));
 })();

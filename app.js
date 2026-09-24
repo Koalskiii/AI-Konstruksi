@@ -1919,7 +1919,7 @@ function toggleUserMenu() {
    PROFILE
 ========================================================= */
 
-function openProfile() {
+async function openProfile() {
 
   $('#user-menu')
     ?.classList.add(
@@ -1934,9 +1934,26 @@ function openProfile() {
     );
 
 
-  toast(
-    'Halaman profil akan tersedia pada tahap berikutnya.'
-  );
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  document.getElementById('profile-modal-backdrop')?.remove();
+
+  document.body.insertAdjacentHTML('beforeend', `
+    <div id="profile-modal-backdrop" class="loc-modal-backdrop">
+      <div class="loc-modal" role="dialog" aria-modal="true">
+        <div class="loc-modal-header"><h3>Profil</h3><button type="button" class="loc-modal-close" aria-label="Tutup">&times;</button></div>
+        <form class="admin-form" style="padding:18px 23px 23px">
+          <label>Nama lengkap<input value="${(currentProfile?.full_name || '-').replace(/"/g, '&quot;')}" disabled></label>
+          <label>Username<input value="${(currentProfile?.username || '-').replace(/"/g, '&quot;')}" disabled></label>
+          <label>Email<input value="${(user?.email || '-').replace(/"/g, '&quot;')}" disabled></label>
+          <label>Role<input value="${(currentProfile?.role || 'Field User').replace(/"/g, '&quot;')}" disabled></label>
+        </form>
+      </div>
+    </div>`);
+
+  const close = () => document.getElementById('profile-modal-backdrop')?.remove();
+  document.getElementById('profile-modal-backdrop').addEventListener('click', e => { if (e.target.id === 'profile-modal-backdrop') close(); });
+  document.querySelector('#profile-modal-backdrop .loc-modal-close').onclick = close;
 
 }
 
@@ -2235,13 +2252,16 @@ function setupTrainingUpload() {
 
     event => {
 
-      const files =
-        event.dataTransfer.files;
+      const files = event.dataTransfer.files;
+      const count = files.length;
 
-
-      const count =
-        files.length;
-
+      try {
+        const transfer = new DataTransfer();
+        for (const file of files) transfer.items.add(file);
+        input.files = transfer.files;
+      } catch (error) {
+        console.warn('AIKON drop-file assignment failed:', error);
+      }
 
       $('#photo-count')
         .textContent =
@@ -2263,18 +2283,39 @@ function setupTrainingUpload() {
    TRAINING SUBMIT
 ========================================================= */
 
-function submitTraining() {
+let trainingProjectId = null;
 
-  const countText =
-    $('#photo-count')
-      ?.textContent
-    || '';
+async function loadTrainingCategories() {
 
+  const select = $('#training-category');
+  if (!select) return;
 
-  if (
-    countText
-      === 'Belum ada foto dipilih'
-  ) {
+  const [projectsResult, itemsResult] = await Promise.all([
+    supabaseClient.from('projects').select('id, name').order('name'),
+    supabaseClient.from('catalog_items').select('id, name, is_active').order('name')
+  ]);
+
+  if (!projectsResult.error && projectsResult.data?.length) {
+    const active = projectsResult.data.find(p => p.name === 'Sekolah Kemala Taruna Bhayangkara') || projectsResult.data[0];
+    trainingProjectId = active?.id || null;
+  }
+
+  if (itemsResult.error) return;
+
+  const items = itemsResult.data.filter(row => row.is_active !== false);
+
+  select.innerHTML =
+    '<option value="">Pilih kategori aset</option>' +
+    items.map(row => `<option value="${row.id}">${row.name}</option>`).join('');
+
+}
+
+async function submitTraining() {
+
+  const input = $('#photo-input');
+  const files = input?.files ? Array.from(input.files) : [];
+
+  if (files.length < 5) {
 
     toast(
       'Tambahkan minimal 5 foto sebelum dikirim.'
@@ -2284,6 +2325,100 @@ function submitTraining() {
 
   }
 
+  const isNew =
+    $('.choice.active')?.dataset.training
+    === 'new';
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if (!user) {
+    toast('Sesi login tidak ditemukan, silakan login ulang.');
+    return;
+  }
+
+  if (!trainingProjectId) {
+    toast('Data project belum termuat, coba lagi sebentar lagi.');
+    return;
+  }
+
+  let itemId = null;
+  let label = '';
+
+  if (isNew) {
+
+    const name = $('#new-category')?.value?.trim();
+
+    if (!name) {
+      toast('Isi nama kategori baru terlebih dahulu.');
+      return;
+    }
+
+    // Self-service enrollment: created without a Room yet — an admin
+    // assigns its location later from Lokasi > "Item belum punya Room".
+    const insertResult = await supabaseClient
+      .from('catalog_items')
+      .insert({ name, quantity: 1, project_id: trainingProjectId })
+      .select('id')
+      .single();
+
+    if (insertResult.error) {
+      toast(insertResult.error.message);
+      return;
+    }
+
+    itemId = insertResult.data.id;
+    label = name;
+
+  } else {
+
+    const select = $('#training-category');
+    itemId = select?.value || '';
+    label = select?.options[select.selectedIndex]?.textContent || '';
+
+    if (!itemId) {
+      toast('Pilih kategori aset terlebih dahulu.');
+      return;
+    }
+
+  }
+
+  toast('Mengunggah foto training...');
+
+  for (const file of files) {
+
+    const path = `${trainingProjectId}/${itemId}/${crypto.randomUUID()}-${file.name}`;
+
+    const uploadResult = await supabaseClient.storage.from('aikon-training').upload(path, file);
+
+    if (uploadResult.error) {
+      toast(uploadResult.error.message);
+      return;
+    }
+
+    const insertResult = await supabaseClient.from('training_images').insert({
+      project_id: trainingProjectId,
+      catalog_item_id: itemId,
+      storage_path: path,
+      label,
+      status: 'pending',
+      created_by: user.id
+    });
+
+    if (insertResult.error) {
+      toast(insertResult.error.message);
+      return;
+    }
+
+  }
+
+  input.value = '';
+
+  $('#photo-count').textContent = 'Belum ada foto dipilih';
+
+  if (isNew) {
+    $('#new-category').value = '';
+    await loadTrainingCategories();
+  }
 
   toast(
     'Data training dikirim untuk review admin.'
@@ -2467,6 +2602,10 @@ document.addEventListener(
 
 
     setupTrainingUpload();
+
+
+    loadTrainingCategories()
+      .catch(error => console.error('Training categories:', error));
 
 
     $('#submit-training')
