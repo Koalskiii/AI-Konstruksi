@@ -38,10 +38,11 @@
   async function adminCheck() {
     const { data: { user } } = await db.auth.getUser();
     if (!user) return false;
+    const result = await db.from('profiles').select('role').eq('id', user.id).single();
     const role = String(result.data?.role || '').toLowerCase();
     isAdmin = role === 'admin';
+    canManageChecklist = isAdmin || role === 'supervisor';
     return isAdmin;
-    return !result.error && String(result.data?.role || '').toLowerCase() === 'admin';
   }
 
   async function load() {
@@ -55,16 +56,16 @@
     for (const result of [p, b, f, r, i]) if (result.error) throw result.error;
     projects = p.data || [];
     buildings = b.data || [];
+    floors = f.data || [];
+    rooms = r.data || [];
+    items = i.data || [];
+  }
 
   async function loadChecklistStates() {
     checklistStates = {};
     if (!items.length) return;
     const result = await db.from('room_asset_checklists').select('catalog_item_id,is_checked').in('catalog_item_id', items.map(i => i.id));
     if (!result.error) (result.data || []).forEach(x => { checklistStates[x.catalog_item_id] = x.is_checked === true; });
-  }
-    floors = f.data || [];
-    rooms = r.data || [];
-    items = i.data || [];
   }
 
   function visibleItems() {
@@ -74,7 +75,6 @@
       if (filter.buildingId && item.building_id !== filter.buildingId) return false;
       if (filter.floorId && item.floor_id !== filter.floorId) return false;
       if (filter.roomId && item.room_id !== filter.roomId) return false;
-      if (q && !String(item.name || '').toLowerCase().includes(q)) return false;
       return true;
     });
   }
@@ -278,6 +278,7 @@
     isAdmin = await adminCheck();
     try {
       await load();
+      await loadChecklistStates();
       render();
     } catch (error) {
       notify(error.message);
