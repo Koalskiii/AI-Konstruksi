@@ -21,6 +21,8 @@ const supabaseClient =
     SUPABASE_KEY
   );
 
+window.aikonSupabaseClient = supabaseClient;
+
 
 /* =========================================================
    INITIAL DATA
