@@ -965,7 +965,9 @@ function route(name) {
 
     'training',
 
-    'catalog'
+    'catalog',
+
+    'list-items'
 
   ];
 
@@ -1029,7 +1031,10 @@ function route(name) {
       'Data training',
 
     catalog:
-      'Katalog ruang'
+      'Katalog ruang',
+
+    'list-items':
+      'List Item'
 
   };
 
