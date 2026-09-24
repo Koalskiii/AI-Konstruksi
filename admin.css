@@ -102,3 +102,14 @@
   width: fit-content;
   margin-top: 6px;
 }
+
+/* List Item spreadsheet */
+.list-item-table-wrap{overflow-x:auto;border:1px solid #dfe7e4;border-radius:12px;background:#fff}
+.list-item-table{width:100%;border-collapse:collapse;min-width:900px}
+.list-item-table th{padding:12px 14px;text-align:left;background:#f4f7f6;color:#61736f;font-size:11px;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid #dfe7e4}
+.list-item-table td{padding:13px 14px;border-bottom:1px solid #edf1ef;vertical-align:middle;color:#27423e}
+.list-item-table tbody tr:last-child td{border-bottom:0}
+.list-item-table tbody tr:hover{background:#fafcfb}
+.list-item-table th:first-child,.list-item-table td:first-child{text-align:center;width:80px}
+.list-item-table input[type="checkbox"]{width:18px;height:18px;accent-color:#0e302d}
+.list-item-table td:nth-child(2){white-space:nowrap}
