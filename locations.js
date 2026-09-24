@@ -1,6 +1,6 @@
 /* =========================================================
    AIKON — LOCATION HIERARCHY
-   Site -> Building -> Floor -> Room -> Item
+   Project -> Building -> Floor -> Room -> Item
    Visible (read-only) to every logged-in user.
    Create / edit / deactivate is admin-only (also enforced by
    Supabase RLS — hiding buttons here is just UX, not security).
@@ -180,15 +180,15 @@
   --------------------------------------------------------- */
 
   function formSite(row) {
-    openModal(row ? 'Edit Site' : 'Tambah Site', `
-      <label>Nama Site<input name="name" required value="${esc(row?.name || '')}"></label>
+    openModal(row ? 'Edit Project' : 'Tambah Project', `
+      <label>Nama Project<input name="name" required value="${esc(row?.name || '')}"></label>
       <label>Lokasi / Deskripsi<input name="location" value="${esc(row?.location || '')}"></label>
     `, data => save('projects', { name: data.name.trim(), location: data.location?.trim() || null }, row?.id));
   }
 
   function formBuilding(row, siteId) {
     openModal(row ? 'Edit Building' : 'Tambah Building', `
-      <label>Site<select name="project_id" required>${activeOf(sites).map(s => `<option value="${s.id}" ${((row?.project_id || siteId) === s.id) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
+      <label>Project<select name="project_id" required>${activeOf(sites).map(s => `<option value="${s.id}" ${((row?.project_id || siteId) === s.id) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
       <label>Nama Building<input name="name" required value="${esc(row?.name || '')}"></label>
     `, data => save('buildings', { project_id: data.project_id, name: data.name.trim() }, row?.id));
   }
@@ -245,8 +245,8 @@
         ${list.length ? `
         <form id="loc-bulk-form" class="admin-form">
           <div class="loc-bulk-list">${list.map(i => `<label class="loc-checkbox"><input type="checkbox" name="item" value="${i.id}"> ${esc(i.name)}</label>`).join('')}</div>
-          <label>Site<select id="loc-bulk-site" required><option value="">Pilih Site</option>${activeOf(sites).map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></label>
-          <label>Building<select id="loc-bulk-building" required disabled><option value="">Pilih Site dahulu</option></select></label>
+          <label>Site<select id="loc-bulk-site" required><option value="">Pilih Project</option>${activeOf(sites).map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select></label>
+          <label>Building<select id="loc-bulk-building" required disabled><option value="">Pilih Project dahulu</option></select></label>
           <label>Floor<select id="loc-bulk-floor" required disabled><option value="">Pilih Building dahulu</option></select></label>
           <label>Room<select id="loc-bulk-room" required disabled><option value="">Pilih Floor dahulu</option></select></label>
           <button type="submit" class="primary-button">Assign lokasi ke item terpilih</button>
@@ -296,7 +296,7 @@
   --------------------------------------------------------- */
 
   function breadcrumb() {
-    const crumbs = [{ label: 'Semua Site', onclick: () => go('sites') }];
+    const crumbs = [{ label: 'Semua Project', onclick: () => go('sites') }];
     if (view.level === 'unassigned') { crumbs.push({ label: 'Item belum punya Room', onclick: () => {} }); return crumbs; }
     if (view.siteId) { const s = siteOf(view.siteId); crumbs.push({ label: s?.name || '...', onclick: () => go('buildings', { siteId: view.siteId }) }); }
     if (view.buildingId) { const b = buildingOf(view.buildingId); crumbs.push({ label: b?.name || '...', onclick: () => go('floors', { buildingId: view.buildingId }) }); }
@@ -328,7 +328,7 @@
     const list = visible(sites);
     return `
       <div class="panel">
-        <div class="panel-header"><div><span class="eyebrow">SITE</span><h2>Semua Site (${list.length})</h2></div>${isAdmin ? '<button id="loc-add" class="primary-button">+ Tambah Site</button>' : ''}</div>
+        <div class="panel-header"><div><span class="eyebrow">PROJECT</span><h2>Semua Project (${list.length})</h2></div>${isAdmin ? '<button id="loc-add" class="primary-button">+ Tambah Site</button>' : ''}</div>
         <div class="admin-list">${list.map(s => listRow(s, { title: s.name, meta: s.location || 'Lokasi belum diisi', level: 'site', table: 'projects' })).join('') || '<small>Belum ada Site.</small>'}</div>
       </div>`;
   }
@@ -370,7 +370,7 @@
   }
 
   function render() {
-    const root = $('#loc-content'); if (!root) return;
+    const root = $('#catalog-grid'); if (!root) return;
     const bc = breadcrumb();
     $('#loc-breadcrumb').innerHTML = bc.map((c, idx) => `<a href="#" data-crumb="${idx}">${esc(c.label)}</a>`).join(' <span class="loc-sep">/</span> ');
     $('#loc-breadcrumb').querySelectorAll('[data-crumb]').forEach(a => a.onclick = e => { e.preventDefault(); bc[Number(a.dataset.crumb)].onclick(); });
@@ -437,33 +437,46 @@
      INIT
   --------------------------------------------------------- */
 
-  async function init() {
+  async function openCatalogHierarchy() {
     const { data: { user } } = await db.auth.getUser();
-    if (!user) return; // not logged in yet — nothing to show
-
+    if (!user) return;
     isAdmin = await adminCheck();
-
-    const nav = document.querySelector('[data-route="catalog"]')?.parentElement;
-    if (nav && !document.querySelector('[data-route="locations"]')) {
-      nav.insertAdjacentHTML('beforeend', '<a href="#locations" class="nav-link" data-route="locations"><span class="nav-icon">▣</span><span>Lokasi</span></a>');
+    if (!$('#catalog-grid')) return;
+    if (!$('#loc-breadcrumb')) {
+      $('#catalog-grid').insertAdjacentHTML('beforebegin', '<p id="loc-breadcrumb" class="loc-breadcrumb"></p>');
     }
-    const content = $('.content');
-    if (!content || $('#locations')) return;
-    content.insertAdjacentHTML('beforeend', `
-      <section id="locations" class="view">
-        <div class="page-header">
-          <div><span class="eyebrow">STRUKTUR LOKASI</span><h1>Lokasi</h1><p id="loc-breadcrumb"></p></div>
-        </div>
-        <div id="loc-content"></div>
-      </section>`);
-
-    document.querySelector('[data-route="locations"]').onclick = async event => {
-      event.preventDefault();
-      document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'locations'));
-      document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('active', l.dataset.route === 'locations'));
-      try { await load(); go('sites'); } catch (error) { notify(error.message); }
-    };
+    try {
+      await load();
+      go('sites');
+    } catch (error) {
+      notify(error.message);
+    }
   }
 
-  document.addEventListener('DOMContentLoaded', () => setTimeout(() => init().catch(error => console.error('Locations UI:', error)), 1000));
+  async function init() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+
+    const catalogNav = document.querySelector('[data-route="catalog"]');
+    if (!catalogNav) return;
+
+    catalogNav.href = '#catalog';
+    const label = catalogNav.querySelector('span:last-child');
+    if (label) label.textContent = 'Katalog ruang';
+    catalogNav.onclick = async event => {
+      event.preventDefault();
+      if (typeof window.route === 'function') window.route('catalog');
+      await openCatalogHierarchy();
+    };
+
+    if (location.hash.slice(1) === 'catalog') {
+      await openCatalogHierarchy();
+    }
+  }
+
+  window.addEventListener('hashchange', () => {
+    if (location.hash.slice(1) === 'catalog') openCatalogHierarchy();
+  });
+
+  document.addEventListener('DOMContentLoaded', () => setTimeout(() => init().catch(error => console.error('Catalog hierarchy:', error)), 1000));
 })();
