@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aikon-v13-library-rooms';
+const CACHE_NAME = 'aikon-v14-list-checklist';
 const SUPABASE_URL = 'https://kiyneeejluyqzvgdfljt.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_NGf9sH1tagHPRfPJRcUvtg_vFJIPF6W';
 const STATIC_ASSETS = ['./','./index.html','./style.css','./styles.css','./app.js','./admin.js','./locations.js','./list-items.js','./ai-verification.js','./admin.css','./manifest.webmanifest'];
