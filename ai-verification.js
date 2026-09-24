@@ -437,6 +437,23 @@
     const insertDetections=await supabaseClient.from('scan_detections').insert(detectionRows);
     if(insertDetections.error) return notify(insertDetections.error.message);
 
+    if (typeof history !== 'undefined') {
+      const now = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const historyRows = detected.map(row => ({
+        item: row.detected_label,
+        room: selectedRoom.name,
+        time: now,
+        status: row.matched ? 'matched' : 'review',
+        sync: navigator.onLine,
+        icon: row.matched ? '▰' : '⚠'
+      }));
+      history.unshift(...historyRows);
+      if (typeof saveHistory === 'function') saveHistory();
+      if (typeof activity === 'function') activity();
+      if (typeof renderHistory === 'function') renderHistory();
+      if (typeof updateStats === 'function') updateStats();
+    }
+
     if (missing.length) {
       await notifySurveyors(projectId, buildingId, floorId, selectedRoom.id, selectedRoom.name, missing, user.id);
       notify(`Ada ${missing.length} jenis barang yang belum terdeteksi. Surveyor diberi pemberitahuan.`);
