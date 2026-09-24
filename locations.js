@@ -356,17 +356,13 @@
     return `
       <div class="panel">
         <div class="panel-header"><div><span class="eyebrow">ROOM</span><h2>${esc(floorOf(view.floorId)?.name || '')} (${list.length})</h2></div>${isAdmin ? '<button id="loc-add" class="primary-button">+ Tambah Room</button>' : ''}</div>
-        <div class="admin-list">${list.map(r => listRow(r, { title: r.name, meta: `${r.room_type ? r.room_type + ' · ' : ''}${r.status} · ${itemsOfRoom(r.id).length} item`, level: 'room', table: 'rooms' })).join('') || '<small>Belum ada Room.</small>'}</div>
+        <div class="admin-list">${list.map(r => listRow(r, { title: r.name, meta: `${r.room_type ? r.room_type + ' · ' : ''}${r.status}`, level: 'room', table: 'rooms', open: false })).join('') || '<small>Belum ada Room.</small>'}</div>
+        <div class="loc-toolbar"><span>Asset di dalam Room dikelola dari <b>List Item</b>.</span><a href="#list-items" class="text-button">Buka List Item</a></div>
       </div>`;
   }
 
   function renderItems() {
-    const list = visible(items.filter(i => i.room_id === view.roomId));
-    return `
-      <div class="panel">
-        <div class="panel-header"><div><span class="eyebrow">ITEM</span><h2>${esc(roomOf(view.roomId)?.name || '')} (${list.length})</h2></div>${isAdmin ? '<button id="loc-add" class="primary-button">+ Tambah Item</button>' : ''}</div>
-        <div class="admin-list">${list.map(i => listRow(i, { title: i.name, meta: `${i.quantity} unit${i.description ? ' ·  + i.description : ''}`, level: 'item', table: 'catalog_items' })).join('') || '<small>Belum ada Item.</small>'}</div>
-      </div>`;
+    return '';
   }
 
   function render() {
