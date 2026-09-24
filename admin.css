@@ -36,3 +36,69 @@
   text-transform: uppercase;
   letter-spacing: .08em;
 }
+
+
+/* Room asset checklist */
+.room-checklist {
+  display: grid;
+  gap: 10px;
+}
+.room-check-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid #dfe7e4;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.room-check-item:hover {
+  border-color: #b8cbc5;
+}
+.room-check-item input {
+  width: 18px;
+  height: 18px;
+  accent-color: #0e302d;
+  flex: 0 0 auto;
+}
+.room-check-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+.room-check-copy strong {
+  color: #173d38;
+}
+.room-check-copy small {
+  color: #71817e;
+}
+.room-check-status {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a8986;
+}
+.room-check-item.is-checked {
+  background: #f1f7f4;
+  border-color: #9fc0b5;
+}
+.room-check-item.is-checked .room-check-status {
+  color: #17624f;
+}
+.room-empty-state {
+  display: grid;
+  gap: 8px;
+  padding: 24px;
+  border: 1px dashed #cbd8d4;
+  border-radius: 12px;
+  background: #fafcfb;
+}
+.room-empty-state span {
+  color: #71817e;
+}
+.room-empty-state .secondary-button {
+  width: fit-content;
+  margin-top: 6px;
+}
