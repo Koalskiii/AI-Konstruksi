@@ -44,6 +44,7 @@
   <script src="./app.js" defer></script>
   <script src="./admin.js" defer></script>
   <script src="./locations.js" defer></script>
+  <script src="./list-items.js" defer></script>
   <script src="./ai-verification.js" defer></script>
 
 </head>
@@ -483,6 +484,23 @@
 
             <span>
               Katalog ruang
+            </span>
+
+          </a>
+
+
+          <a
+            href="#list-items"
+            class="nav-link"
+            data-route="list-items"
+          >
+
+            <span class="nav-icon">
+              ◼
+            </span>
+
+            <span>
+              List Item
             </span>
 
           </a>
@@ -1131,7 +1149,7 @@
               </h1>
 
               <p>
-                Kelola Project, Building, Floor, Room, dan Item. Perubahan struktur dilakukan langsung oleh Admin tanpa mengubah kode.
+                Kelola Project, Building, Floor, dan Room. Asset seperti meja, kursi, monitor, proyektor, dan item lainnya dikelola terpisah di List Item.
               </p>
               <p id="loc-breadcrumb" class="loc-breadcrumb"></p>
 
@@ -1148,6 +1166,36 @@
           </div>
 
           <div id="catalog-grid" class="catalog-grid"></div>
+
+        </section>
+
+
+        <section
+          id="list-items"
+          class="view"
+        >
+
+          <div class="page-header">
+
+            <div>
+
+              <span class="eyebrow">
+                MASTER ASSET
+              </span>
+
+              <h1>
+                List Item
+              </h1>
+
+              <p>
+                Kelola daftar asset yang boleh diverifikasi AI. Penambahan dan pengurangan asset dilakukan di sini, bukan di Katalog ruang.
+              </p>
+
+            </div>
+
+          </div>
+
+          <div id="list-items-grid" class="catalog-grid"></div>
 
         </section>
 
