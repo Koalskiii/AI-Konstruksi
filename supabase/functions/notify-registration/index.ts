@@ -50,12 +50,12 @@ Deno.serve(async (req: Request) => {
 
     const { data: registration, error: registrationError } = await admin
       .from("registration_requests")
-      .select("id,user_id,requested_role,status,created_at")
+      .select("id,user_id,requested_role,status,created_at,email_notified_at")
       .eq("id", record.id)
       .maybeSingle();
 
     if (registrationError) throw registrationError;
-    if (!registration || registration.status !== "pending") {
+    if (!registration || registration.status !== "pending" || registration.email_notified_at) {
       return Response.json({ ok: true, ignored: true }, { headers: corsHeaders });
     }
 
