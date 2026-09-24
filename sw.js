@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aikon-v11-auth-client';
+const CACHE_NAME = 'aikon-v12-navigation';
 const SUPABASE_URL = 'https://kiyneeejluyqzvgdfljt.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_NGf9sH1tagHPRfPJRcUvtg_vFJIPF6W';
 const STATIC_ASSETS = ['./','./index.html','./style.css','./styles.css','./app.js','./admin.js','./locations.js','./list-items.js','./ai-verification.js','./admin.css','./manifest.webmanifest'];
