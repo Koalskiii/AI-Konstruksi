@@ -315,7 +315,7 @@
     }
     if (view.roomId) {
       const r = roomOf(view.roomId);
-      crumbs.push({ label: r?.name || 'Room', onclick: () => {} });
+      crumbs.push({ label: r?.name || 'Room', onclick: () => go('room-detail', { siteId: view.siteId, buildingId: view.buildingId, floorId: view.floorId, roomId: view.roomId }) });
     }
     return crumbs;
   }
@@ -324,6 +324,7 @@
     if (view.level === 'buildings') return { label: 'Kembali ke Semua Project', action: () => go('sites') };
     if (view.level === 'floors') return { label: 'Kembali ke Building', action: () => go('buildings', { siteId: view.siteId }) };
     if (view.level === 'rooms') return { label: 'Kembali ke Floor', action: () => go('floors', { buildingId: view.buildingId }) };
+    if (view.level === 'room-detail') return { label: 'Kembali ke Daftar Room', action: () => go('rooms', { floorId: view.floorId }) };
     return null;
   }
 
@@ -383,6 +384,49 @@
       </div>`;
   }
 
+  function checklistKey(roomId) {
+    return `aikon-room-checklist-${roomId}`;
+  }
+
+  function renderRoomDetail() {
+    const room = roomOf(view.roomId);
+    if (!room) return '<div class="panel"><small>Room tidak ditemukan.</small></div>';
+    const expected = active(items).filter(i => i.room_id === room.id);
+    const checked = JSON.parse(localStorage.getItem(checklistKey(room.id)) || '{}');
+
+    return `
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <span class="eyebrow">ROOM ASSET CHECKLIST</span>
+            <h2>${esc(room.name)}</h2>
+            <p>Daftar asset yang seharusnya ada di room ini berdasarkan <b>List Item</b>.</p>
+          </div>
+          <span class="loc-badge">${expected.length} jenis asset</span>
+        </div>
+
+        <div class="room-checklist">
+          ${expected.map(item => {
+            const done = checked[item.id] === true;
+            return `
+              <label class="room-check-item ${done ? 'is-checked' : ''}">
+                <input type="checkbox" data-room-check="${item.id}" ${done ? 'checked' : ''}>
+                <span class="room-check-copy">
+                  <strong>${esc(item.name)}</strong>
+                  <small>${Number(item.quantity || 0)} unit seharusnya ada</small>
+                </span>
+                <span class="room-check-status">${done ? 'Sudah dicek' : 'Belum dicek'}</span>
+              </label>`;
+          }).join('') || `
+            <div class="room-empty-state">
+              <strong>Belum ada asset terdaftar.</strong>
+              <span>Tambahkan meja, kursi, monitor, proyektor, dan asset lain melalui <b>List Item</b>.</span>
+              <a href="#list-items" class="secondary-button">Buka List Item</a>
+            </div>`}
+        </div>
+      </div>`;
+  }
+
   function renderItems() {
     return '';
   }
@@ -406,6 +450,7 @@
     else if (view.level === 'buildings') body = renderBuildings();
     else if (view.level === 'floors') body = renderFloors();
     else if (view.level === 'rooms') body = renderRooms();
+    else if (view.level === 'room-detail') body = renderRoomDetail();
     else body = renderSites();
 
     root.innerHTML = toolbar + body;
@@ -417,13 +462,24 @@
 
     if (view.level === 'unassigned') { return; }
 
+    root.querySelectorAll('[data-room-check]').forEach(input => {
+      input.onchange = () => {
+        const room = roomOf(view.roomId);
+        if (!room) return;
+        const state = JSON.parse(localStorage.getItem(checklistKey(room.id)) || '{}');
+        state[input.dataset.roomCheck] = input.checked;
+        localStorage.setItem(checklistKey(room.id), JSON.stringify(state));
+        render();
+      };
+    });
+
     root.querySelectorAll('[data-open]').forEach(el => el.onclick = () => {
       const id = el.dataset.open;
       if (view.level === 'sites') go('buildings', { siteId: id });
       else if (view.level === 'buildings') go('floors', { buildingId: id });
       else if (view.level === 'floors') go('rooms', { floorId: id });
       else if (view.level === 'rooms') {
-        window.route?.('list-items');
+        go('room-detail', { floorId: view.floorId, roomId: id, buildingId: view.buildingId, siteId: view.siteId });
       }
     });
 
