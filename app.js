@@ -605,68 +605,59 @@ async function login() {
       ?.value
       .trim();
 
-
   const password =
     $('#login-password')
       ?.value;
 
-
-  if (
-    !email
-    || !password
-  ) {
-
-    toast(
-      'Masukkan email dan password.'
-    );
-
+  if (!email || !password) {
+    toast('Masukkan email dan password.');
     return;
-
   }
-
 
   const {
+    data: loginData,
     error
-  } =
-    await supabaseClient.auth
-      .signInWithPassword({
-
-        email,
-
-        password
-
-      });
-
+  } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
 
   if (error) {
-
-    console.error(
-      error
-    );
-
-    toast(
-      error.message
-    );
-
+    console.error(error);
+    toast(error.message);
     return;
-
   }
 
+  $('#login-email').value = '';
+  $('#login-password').value = '';
 
-  $('#login-email').value =
-    '';
+  const profileResult = await supabaseClient
+    .from('profiles')
+    .select('approval_status, requested_role, role')
+    .eq('id', loginData.user.id)
+    .single();
 
-  $('#login-password').value =
-    '';
+  if (profileResult.error) {
+    await supabaseClient.auth.signOut();
+    toast('Akun belum memiliki profil yang valid. Hubungi Admin.');
+    return;
+  }
 
+  if (profileResult.data.approval_status !== 'approved') {
+    await supabaseClient.auth.signOut();
+
+    if (profileResult.data.approval_status === 'rejected') {
+      toast('Registrasi Anda ditolak. Hubungi Admin jika perlu klarifikasi.');
+    } else {
+      toast('Akun masih menunggu persetujuan Admin.');
+    }
+
+    return;
+  }
 
   await loadUser();
 
-
-  toast(
-    'Login berhasil.'
-  );
-
+  toast('Login berhasil.');
 }
 
 
@@ -714,7 +705,7 @@ async function loadUser() {
       .from('profiles')
 
       .select(
-        'username, full_name, role'
+        'username, full_name, role, requested_role, approval_status'
       )
 
       .eq(
@@ -743,6 +734,21 @@ async function loadUser() {
 
     return;
 
+  }
+
+
+  if (profile.approval_status !== 'approved') {
+    await supabaseClient.auth.signOut();
+    currentProfile = null;
+
+    if (profile.approval_status === 'rejected') {
+      toast('Registrasi Anda ditolak. Hubungi Admin jika perlu klarifikasi.');
+    } else {
+      toast('Akun masih menunggu persetujuan Admin.');
+    }
+
+    showLogin();
+    return;
   }
 
 
