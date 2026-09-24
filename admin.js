@@ -8,12 +8,17 @@
 (() => {
   const URL = 'https://kiyneeejluyqzvgdfljt.supabase.co';
   const KEY = 'sb_publishable_NGf9sH1tagHPRfPJRcUvtg_vFJIPF6W';
-  const db = window.supabase.createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  const db = window.aikonSupabaseClient || window.supabase.createClient(URL, KEY);
   let project = null, projects = [], items = [], training = [], registrationRequests = [];
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const notify = text => { const el = $('#toast'); if (!el) return; el.textContent = text; el.classList.remove('hidden'); setTimeout(() => el.classList.add('hidden'), 2800); };
-  const adminCheck = async () => { const { data: { user } } = await db.auth.getUser(); if (!user) return false; const result = await db.from('profiles').select('role').eq('id', user.id).single(); return !result.error && result.data?.role === 'admin'; };
+  const adminCheck = async () => {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return false;
+    const result = await db.from('profiles').select('role').eq('id', user.id).single();
+    return !result.error && String(result.data?.role || '').toLowerCase() === 'admin';
+  };
 
   async function load() {
     const [p, i, t, rr] = await Promise.all([
@@ -126,9 +131,9 @@
   async function init() {
     if (!(await adminCheck())) return;
     const nav = document.querySelector('[data-route="catalog"]')?.parentElement;
-    if (nav && !document.querySelector('[data-route="admin"]')) nav.insertAdjacentHTML('beforeend', '<a href="#admin" class="nav-link" data-route="admin"><span class="nav-icon">⚙</span><span>Training AI</span></a>');
+    if (nav && !document.querySelector('[data-route="admin"]')) nav.insertAdjacentHTML('beforeend', '<a href="#admin" class="nav-link" data-route="admin"><span class="nav-icon">⚙</span><span>Admin</span></a>');
     const content = $('.content'); if (!content || $('#admin')) return;
-    content.insertAdjacentHTML('beforeend', '<section id="admin" class="view"><div class="page-header"><div><span class="eyebrow">ADMINISTRATOR</span><h1>Dataset training AI</h1><p>Kelola lokasi (Site/Building/Floor/Room/Item) sekarang ada di menu <b>Lokasi</b>.</p></div></div><div id="admin-content"></div></section>');
+    content.insertAdjacentHTML('beforeend', '<section id="admin" class="view"><div class="page-header"><div><span class="eyebrow">ADMINISTRATOR</span><h1>Panel Admin</h1><p>Persetujuan registrasi user, dataset training, dan kontrol administrasi AIKON.</p></div></div><div id="admin-content"></div></section>');
     document.querySelector('[data-route="admin"]').onclick = event => {
       event.preventDefault();
       document.querySelectorAll('.view').forEach(view => view.classList.toggle('active', view.id === 'admin'));
