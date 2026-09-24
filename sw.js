@@ -46,8 +46,6 @@ self.addEventListener('push', event => {
   const title = data.title || 'AIKON — Pemberitahuan';
   const options = {
     body: data.body || 'Ada pembaruan pemeriksaan aset.',
-    icon: './icons/icon-192.png',
-    badge: './icons/icon-192.png',
     data: data.data || {}
   };
   event.waitUntil(self.registration.showNotification(title, options));
