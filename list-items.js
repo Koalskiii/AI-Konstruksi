@@ -22,6 +22,8 @@
     setTimeout(() => el.classList.add('hidden'), 2800);
   };
 
+  let canManageChecklist = false;
+  let checklistStates = {};
   let isAdmin = false;
   let projects = [], buildings = [], floors = [], rooms = [], items = [];
   let filter = { projectId: '', buildingId: '', floorId: '', roomId: '', search: '' };
@@ -36,7 +38,9 @@
   async function adminCheck() {
     const { data: { user } } = await db.auth.getUser();
     if (!user) return false;
-    const result = await db.from('profiles').select('role').eq('id', user.id).single();
+    const role = String(result.data?.role || '').toLowerCase();
+    isAdmin = role === 'admin';
+    return isAdmin;
     return !result.error && String(result.data?.role || '').toLowerCase() === 'admin';
   }
 
@@ -51,6 +55,13 @@
     for (const result of [p, b, f, r, i]) if (result.error) throw result.error;
     projects = p.data || [];
     buildings = b.data || [];
+
+  async function loadChecklistStates() {
+    checklistStates = {};
+    if (!items.length) return;
+    const result = await db.from('room_asset_checklists').select('catalog_item_id,is_checked').in('catalog_item_id', items.map(i => i.id));
+    if (!result.error) (result.data || []).forEach(x => { checklistStates[x.catalog_item_id] = x.is_checked === true; });
+  }
     floors = f.data || [];
     rooms = r.data || [];
     items = i.data || [];
@@ -59,7 +70,7 @@
   function visibleItems() {
     const q = filter.search.trim().toLowerCase();
     return (showInactive ? items : active(items)).filter(item => {
-      if (filter.projectId && item.project_id !== filter.projectId) return false;
+      if (q && !String(item.name || '').toLowerCase().includes(q) && !String(item.item_code || '').toLowerCase().includes(q)) return false;
       if (filter.buildingId && item.building_id !== filter.buildingId) return false;
       if (filter.floorId && item.floor_id !== filter.floorId) return false;
       if (filter.roomId && item.room_id !== filter.roomId) return false;
@@ -113,8 +124,8 @@
         <option value="">Pilih Floor</option>
         ${active(floors.filter(f => f.building_id === selectedBuilding)).map(f => `<option value="${f.id}" ${selectedFloor === f.id ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}
       </select></label>
-      <label>Room<select name="room_id" id="item-room" required>
-        <option value="">Pilih Room</option>
+      <label>Kode Barang<input name="item_code" required value="${esc(row?.item_code || '')}" placeholder="Contoh: AST-001"></label>
+      <label>Nama Barang<input name="name" required value="${esc(row?.name || '')}" placeholder="Contoh: Meja kerja, Kursi kantor, Monitor LED"></label>
         ${active(rooms.filter(r => r.floor_id === selectedFloor)).map(r => `<option value="${r.id}" ${selectedRoom === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
       </select></label>
       <label>Nama Asset<input name="name" required value="${esc(row?.name || '')}" placeholder="Contoh: Meja kerja, Kursi kantor, Monitor LED"></label>
@@ -147,7 +158,7 @@
       const floor = room ? floorOf(room.floor_id) : null;
       const building = floor ? buildingOf(floor.building_id) : null;
       const values = {
-        project_id: building?.project_id || data.project_id,
+        item_code: data.item_code.trim().toUpperCase(),
         building_id: building?.id || data.building_id,
         floor_id: floor?.id || data.floor_id,
         room_id: room?.id || data.room_id,
@@ -162,6 +173,7 @@
       if (result.error) return notify(result.error.message);
       closeModal();
       await load();
+      await loadChecklistStates();
       render();
       notify(row ? 'Asset diperbarui.' : 'Asset ditambahkan.');
     };
@@ -201,7 +213,7 @@
     const floorOptions = active(floors.filter(f => !filter.buildingId || f.building_id === filter.buildingId));
     const roomOptions = active(rooms.filter(r => !filter.floorId || r.floor_id === filter.floorId));
     const list = visibleItems();
-
+          <div><span class="eyebrow">MASTER ASSET</span><h2>List Item (${list.length})</h2><p>Admin mengelola nama dan kode barang. Supervisor dapat melakukan checklist pemeriksaan.</p></div>
     root.innerHTML = `
       <div class="panel">
         <div class="panel-header">
@@ -214,11 +226,10 @@
           <select id="item-filter-building"><option value="">Semua Building</option>${buildingOptions.map(b => `<option value="${b.id}" ${filter.buildingId === b.id ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}</select>
           <select id="item-filter-floor"><option value="">Semua Floor</option>${floorOptions.map(f => `<option value="${f.id}" ${filter.floorId === f.id ? 'selected' : ''}>${esc(f.name)}</option>`).join('')}</select>
           <select id="item-filter-room"><option value="">Semua Room</option>${roomOptions.map(r => `<option value="${r.id}" ${filter.roomId === r.id ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select>
-          <input id="item-search" type="search" placeholder="Cari asset..." value="${esc(filter.search)}">
-          ${isAdmin ? `<label class="loc-checkbox"><input type="checkbox" id="item-show-inactive" ${showInactive ? 'checked' : ''}> Tampilkan nonaktif</label>` : ''}
-        </div>
-
-        <div class="admin-list">
+        <div class="list-item-table-wrap">
+          <table class="list-item-table">
+            <thead><tr><th>Checklist</th><th>Kode Barang</th><th>Nama Barang</th><th>Lokasi</th><th>Jumlah</th><th>Status</th>${isAdmin ? '<th>Aksi</th>' : ''} </tr></thead>
+            <tbody>
           ${list.map(row => {
             const room = roomOf(row.room_id);
             const floor = room ? floorOf(room.floor_id) : null;
@@ -226,19 +237,19 @@
             const project = building ? projectOf(building.project_id) : projectOf(row.project_id);
             const inactive = row.is_active === false;
             return `
-              <div class="admin-row loc-row ${inactive ? 'loc-row-inactive' : ''}">
-                <div class="loc-row-main">
-                  <strong>${esc(row.name)}${inactive ? ' <span class="loc-badge">Nonaktif</span>' : ''}</strong>
-                  <small>${esc(project?.name || 'Project belum ditentukan')} · ${esc(building?.name || 'Building belum ditentukan')} · ${esc(floor?.name || 'Floor belum ditentukan')} · ${esc(room?.name || 'Room belum ditentukan')}</small>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                  <div class="loc-qty-control">
-                    ${isAdmin ? '<button type="button" class="text-button" data-qty="-1" data-id="' + row.id + '">−</button>' : ''}
-                    <strong>${Number(row.quantity || 0)} unit</strong>
-                    ${isAdmin ? '<button type="button" class="text-button" data-qty="1" data-id="' + row.id + '">+</button>' : ''}
-                  </div>
-                  ${isAdmin ? '<button type="button" class="text-button" data-edit-item="' + row.id + '">Edit</button>' : ''}
-                  ${isAdmin ? (inactive ? '<button type="button" class="text-button" data-restore-item="' + row.id + '">Aktifkan</button>' : '<button type="button" class="text-button danger" data-deactivate-item="' + row.id + '">Nonaktifkan</button>') : ''}
+              <tr class="${inactive ? 'loc-row-inactive' : ''}">
+                <td><input type="checkbox" class="list-item-check" data-check-id="${row.id}" ${canManageChecklist ? (checklistStates[row.id] ? 'checked' : '') : 'disabled'}></td>
+                <td><strong>${esc(row.item_code || '—')}</strong></td>
+                <td><strong>${esc(row.name)}${inactive ? ' <span class="loc-badge">Nonaktif</span>' : ''}</strong></td>
+                <td><small>${esc(project?.name || '—')} · ${esc(building?.name || '—')} · ${esc(floor?.name || '—')} · ${esc(room?.name || '—')}</small></td>
+                <td><div class="loc-qty-control">${isAdmin ? '<button type="button" class="text-button" data-qty="-1" data-id="' + row.id + '">−</button>' : ''}<strong>${Number(row.quantity || 0)}</strong>${isAdmin ? '<button type="button" class="text-button" data-qty="1" data-id="' + row.id + '">+</button>' : ''}</div></td>
+                <td>${inactive ? 'Nonaktif' : 'Aktif'}</td>
+                ${isAdmin ? '<td><button type="button" class="text-button" data-edit-item="' + row.id + '">Edit</button> ' + (inactive ? '<button type="button" class="text-button" data-restore-item="' + row.id + '">Aktifkan</button>' : '<button type="button" class="text-button danger" data-deactivate-item="' + row.id + '">Nonaktifkan</button>') + '</td>' : ''}
+              </tr>`;
+          }).join('') || '<tr><td colspan="7"><small>Belum ada asset pada filter ini.</small></td></tr>'}
+            </tbody>
+          </table>
+        </div>
                 </div>
               </div>`;
           }).join('') || '<small>Belum ada asset pada filter ini.</small>'}
@@ -263,6 +274,19 @@
     root.querySelectorAll('[data-restore-item]').forEach(btn => btn.onclick = () => setActive(btn.dataset.restoreItem, true));
     root.querySelectorAll('[data-deactivate-item]').forEach(btn => btn.onclick = () => setActive(btn.dataset.deactivateItem, false));
     root.querySelectorAll('[data-qty]').forEach(btn => btn.onclick = () => adjustQuantity(btn.dataset.id, Number(btn.dataset.qty)));
+    root.querySelectorAll('.list-item-check').forEach(box => box.onchange = async () => {
+      if (!canManageChecklist) return;
+      const item = items.find(x => x.id === box.dataset.checkId);
+      if (!item?.room_id) return;
+      const user = (await db.auth.getUser()).data.user;
+      const result = await db.from('room_asset_checklists').upsert({
+        room_id: item.room_id, catalog_item_id: item.id, is_checked: box.checked,
+        checked_by: user?.id || null, checked_at: box.checked ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'room_id,catalog_item_id' });
+      if (result.error) { box.checked = !box.checked; notify(result.error.message); }
+      else checklistStates[item.id] = box.checked;
+    });
   }
 
   async function openPage() {
