@@ -47,8 +47,14 @@
         <div class="admin-list">${registrationRequests.map(row => {
           const p = row.profile || {};
           return `<div class="admin-row">
-            <div><strong>${esc(p.full_name || p.username || 'User')}</strong><small>${esc(p.email || '')} · Role: <b>${esc(row.requested_role)}</b> · ${new Date(row.created_at).toLocaleString('id-ID')}</small></div>
-            <div style="display:flex;gap:6px"><button class="text-button" data-approve-user="${row.id}">Accept</button><button class="text-button danger" data-reject-user="${row.id}">Reject</button></div>
+            <div><strong>${esc(p.full_name || p.username || 'User')}</strong><small>${esc(p.email || '')} · Role diminta: <b>${esc(row.requested_role)}</b> · ${new Date(row.created_at).toLocaleString('id-ID')}</small></div>
+            <div class="admin-review-actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <select class="admin-role-select" data-role-user="${row.id}" aria-label="Role user">
+                <option value="Field User">Field User</option><option value="Surveyor">Surveyor</option><option value="Supervisor">Supervisor</option><option value="QA/QC">QA/QC</option><option value="PM">PM</option><option value="Admin">Admin</option>
+              </select>
+              <button class="text-button" data-approve-user="${row.id}">Accept</button>
+              <button class="text-button danger" data-reject-user="${row.id}">Reject</button>
+            </div>
           </div>`;
         }).join('')}</div>
       </section>` : '';
@@ -61,7 +67,10 @@
       </form>
       <div class="admin-list">${training.map(row => `<div class="admin-row"><div><strong>${esc(row.label || 'Tanpa label')}</strong><small>${esc(row.status)} · ${esc(row.storage_path)}</small></div><div style="display:flex;gap:6px"><button class="text-button" data-approve-training="${row.id}" ${row.status === 'approved' ? 'disabled' : ''}>Approve</button><button class="text-button danger" data-reject-training="${row.id}" ${row.status === 'rejected' ? 'disabled' : ''}>Reject</button><button class="text-button danger" data-delete-training="${row.id}">Hapus</button></div></div>`).join('') || '<small>Belum ada foto training.</small>'}</div>
     </section>`;
-    root.querySelectorAll('[data-approve-user]').forEach(b => b.onclick = () => reviewRegistration(b.dataset.approveUser, 'approved'));
+    root.querySelectorAll('[data-approve-user]').forEach(b => b.onclick = () => {
+      const select = root.querySelector(`[data-role-user="${b.dataset.approveUser}"]`);
+      reviewRegistration(b.dataset.approveUser, 'approved', select?.value || '');
+    });
     root.querySelectorAll('[data-reject-user]').forEach(b => b.onclick = () => reviewRegistration(b.dataset.rejectUser, 'rejected'));
     $('#photo-form').onsubmit = upload;
     root.querySelectorAll('[data-approve-training]').forEach(b => b.onclick = () => setTrainingStatus(b.dataset.approveTraining, 'approved'));
@@ -70,7 +79,7 @@
   }
 
 
-  async function reviewRegistration(requestId, status) {
+  async function reviewRegistration(requestId, status, approvedRole = '') {
     const request = registrationRequests.find(row => row.id === requestId);
     if (!request) return;
     const userId = request.user_id;
@@ -78,8 +87,10 @@
     if (!adminUser) return notify('Sesi admin tidak ditemukan.');
     const now = new Date().toISOString();
 
+    if (status === 'approved' && !approvedRole) return notify('Pilih role untuk user terlebih dahulu.');
+
     const profileUpdate = status === 'approved'
-      ? { role: request.requested_role, approval_status: 'approved', approved_by: adminUser.id, approved_at: now }
+      ? { role: approvedRole, approval_status: 'approved', approved_by: adminUser.id, approved_at: now }
       : { role: null, approval_status: 'rejected', approved_by: adminUser.id, approved_at: now };
 
     // profiles uses approved_by/approved_at as the approval audit fields.
