@@ -41,7 +41,7 @@
     const result = await db.from('profiles').select('role').eq('id', user.id).single();
     const role = String(result.data?.role || '').toLowerCase();
     isAdmin = role === 'admin';
-    canManageChecklist = isAdmin || role === 'supervisor';
+    canManageChecklist = isAdmin || role === 'pm & supervisor' || role === 'owner' || role === 'qa/qc';
     return isAdmin;
   }
 
@@ -215,7 +215,7 @@
     root.innerHTML = `
       <div class="panel">
         <div class="panel-header">
-          <div><span class="eyebrow">MASTER ASSET</span><h2>List Item (${list.length})</h2><p>Admin mengelola nama dan kode barang. Supervisor dapat melakukan checklist pemeriksaan.</p></div>
+          <div><span class="eyebrow">MASTER ASSET</span><h2>List Item (${list.length})</h2><p>Admin mengelola master asset. PM & Supervisor, QA/QC, dan Owner dapat melakukan checklist pemeriksaan.</p></div>
           ${isAdmin ? '<button id="item-add" class="primary-button">+ Tambah Asset</button>' : ''}
         </div>
         <div class="loc-toolbar" style="flex-wrap:wrap">
