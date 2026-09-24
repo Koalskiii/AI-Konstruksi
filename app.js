@@ -906,7 +906,9 @@ function route(name) {
 
     'catalog',
 
-    'list-items'
+    'list-items',
+
+    'admin'
 
   ];
 
@@ -973,7 +975,10 @@ function route(name) {
       'Katalog ruang',
 
     'list-items':
-      'List Item'
+      'List Item',
+
+    admin:
+      'Admin'
 
   };
 
