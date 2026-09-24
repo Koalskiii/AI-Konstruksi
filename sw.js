@@ -1,7 +1,7 @@
-const CACHE_NAME = 'aikon-v7-auth-admin-ui';
+const CACHE_NAME = 'aikon-v8-location-hierarchy';
 const SUPABASE_URL = 'https://kiyneeejluyqzvgdfljt.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_NGf9sH1tagHPRfPJRcUvtg_vFJIPF6W';
-const STATIC_ASSETS = ['./','./index.html','./style.css','./styles.css','./app.js','./admin.js','./admin.css','./manifest.webmanifest'];
+const STATIC_ASSETS = ['./','./index.html','./style.css','./styles.css','./app.js','./admin.js','./locations.js','./admin.css','./manifest.webmanifest'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(async cache => {
@@ -35,8 +35,8 @@ async function rewriteHtml(request) {
   const response = await fetch(request);
   if (!response.ok) return response;
   let html = await response.text();
-  const tags = '<link rel="stylesheet" href="./admin.css"><script src="./admin.js"></script>';
-  if (!html.includes('./admin.js')) html = html.replace('</head>', `${tags}</head>`);
+  const tags = '<link rel="stylesheet" href="./admin.css"><script src="./admin.js"></script><script src="./locations.js"></script>';
+  if (!html.includes('./admin.js') || !html.includes('./locations.js')) html = html.replace('</head>', `${tags}</head>`);
   return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
 }
 
