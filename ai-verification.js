@@ -449,7 +449,7 @@
   }
 
   async function notifySurveyors(projectId, buildingId, floorId, roomId, roomName, missing, reporterId) {
-    const { data: surveyors, error } = await supabaseClient.from('profiles').select('id,full_name,role').eq('role','surveyor');
+    const { data: surveyors, error } = await supabaseClient.from('profiles').select('id,full_name,role').ilike('role','surveyor');
     if (error || !surveyors?.length) return;
 
     const body = `${missing.map(x=>x.name + ' kurang ' + x.missing + ' unit').join(', ')} di ${roomName}.`;
@@ -494,7 +494,7 @@
 
   async function registerSurveyorPush() {
     if (!VAPID_PUBLIC_KEY || !('PushManager' in window) || !('serviceWorker' in navigator)) return;
-    if (currentProfile?.role !== 'surveyor') return;
+    if (String(currentProfile?.role || '').toLowerCase() !== 'surveyor') return;
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') return;
