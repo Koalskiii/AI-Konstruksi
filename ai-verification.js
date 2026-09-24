@@ -406,14 +406,16 @@
 
     const counts = new Map();
     for (const row of detected) if (row.matched) counts.set(row.catalog_item_id, (counts.get(row.catalog_item_id)||0)+1);
-    const missing = roomItems.filter(item => (counts.get(item.id)||0) < Number(item.quantity||1));
+    const missing = roomItems
+      .map(item => ({ ...item, missing: Number(item.quantity || 1) - (counts.get(item.id) || 0) }))
+      .filter(item => item.missing > 0);
     const unexpected = detected.filter(row => !row.matched);
 
     const summary = {
       room_id:selectedRoom.id,
       expected:roomItems.map(item=>({id:item.id,name:item.name,quantity:Number(item.quantity||1)})),
       detected:roomItems.map(item=>({id:item.id,name:item.name,quantity:counts.get(item.id)||0})),
-      missing:missing.map(item=>({id:item.id,name:item.name,missing:Number(item.quantity||1)-(counts.get(item.id)||0)})),
+      missing:missing.map(item=>({id:item.id,name:item.name,missing:item.missing})),
       unexpected:unexpected.map(row=>row.detected_label)
     };
 
@@ -450,13 +452,13 @@
     const { data: surveyors, error } = await supabaseClient.from('profiles').select('id,full_name,role').eq('role','surveyor');
     if (error || !surveyors?.length) return;
 
-    const body = `${missing.map(x=>x.name + ' kurang ' + (Number(x.quantity||1))).join(', ')} di ${roomName}.`;
+    const body = `${missing.map(x=>x.name + ' kurang ' + x.missing + ' unit').join(', ')} di ${roomName}.`;
     const rows = surveyors.map(s => ({
       user_id:s.id,
       type:'asset_missing',
       title:'Barang kurang terdeteksi',
       body,
-      data:{project_id:projectId,building_id:buildingId,floor_id:floorId,room_id:roomId,missing:missing.map(x=>({id:x.id,name:x.name,missing:Number(x.quantity||1)})),reported_by:reporterId}
+      data:{project_id:projectId,building_id:buildingId,floor_id:floorId,room_id:roomId,missing:missing.map(x=>({id:x.id,name:x.name,missing:x.missing})),reported_by:reporterId}
     }));
     const result=await supabaseClient.from('notifications').insert(rows).select('id,user_id');
     if(result.error) console.error('Notification insert:',result.error);
