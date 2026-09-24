@@ -19,7 +19,7 @@ where not exists (
 
 -- Room rows were applied directly to production from the supplied schedule.
 -- GF: 19 rooms
--- Floor 1: 32 rooms
+-- Floor 1: 31 rooms
 -- Floor 2: 30 rooms
 -- Floor 3: 30 rooms
--- Total: 111 rooms
+-- Total: 110 rooms
