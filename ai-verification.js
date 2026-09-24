@@ -11,6 +11,7 @@
   const MODEL_DTYPE = 'q4';
   const EMBEDDING_CACHE_PREFIX = 'aikon-dino-ref-v1:';
   const MATCH_THRESHOLD = 0.48;
+  const VAPID_PUBLIC_KEY = 'BBMYOY3sZ2iPAZQJR6CPFi14KLE-9pBwgOJdlpszhHEmcljgGnQpmVse2XaWEOjGZh-o93Smi4GNJo7OQ5VH6Tw';
 
   let extractorPromise = null;
   let roomItems = [];
@@ -457,11 +458,67 @@
       body,
       data:{project_id:projectId,building_id:buildingId,floor_id:floorId,room_id:roomId,missing:missing.map(x=>({id:x.id,name:x.name,missing:Number(x.quantity||1)})),reported_by:reporterId}
     }));
-    const result=await supabaseClient.from('notifications').insert(rows);
+    const result=await supabaseClient.from('notifications').insert(rows).select('id,user_id');
     if(result.error) console.error('Notification insert:',result.error);
+
+    try {
+      const push = await supabaseClient.functions.invoke('send-missing-asset-push', {
+        body: {
+          user_ids: surveyors.map(s => s.id),
+          notification: {
+            title: 'AIKON — Barang kurang',
+            body,
+            url: '/AI-Konstruksi/#history',
+            tag: 'aikon-asset-missing'
+          }
+        }
+      });
+      if (push.error) console.warn('AIKON push function:', push.error);
+    } catch (error) {
+      console.warn('AIKON push invoke:', error);
+    }
 
     if ('Notification' in window && Notification.permission === 'granted') {
       try { new Notification('AIKON — Barang kurang', { body }); } catch {}
+    }
+  }
+
+  function base64UrlToBytes(value) {
+    const padding = '='.repeat((4 - value.length % 4) % 4);
+    const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    return Uint8Array.from(raw, c => c.charCodeAt(0));
+  }
+
+  async function registerSurveyorPush() {
+    if (!VAPID_PUBLIC_KEY || !('PushManager' in window) || !('serviceWorker' in navigator)) return;
+    if (currentProfile?.role !== 'surveyor') return;
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+      if (!subscription) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64UrlToBytes(VAPID_PUBLIC_KEY)
+        });
+      }
+      const json = subscription.toJSON();
+      const keys = json.keys || {};
+      if (!json.endpoint || !keys.p256dh || !keys.auth) return;
+      const user = (await supabaseClient.auth.getUser()).data.user;
+      if (!user) return;
+      await supabaseClient.from('push_subscriptions').upsert({
+        user_id: user.id,
+        endpoint: json.endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+        user_agent: navigator.userAgent,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,endpoint' });
+    } catch (error) {
+      console.warn('AIKON push subscription:', error);
     }
   }
 
@@ -477,6 +534,7 @@
     injectUI();
     loadProjects().catch(error => console.error('AIKON AI locations:', error));
     requestSurveyorNotifications();
+    setTimeout(() => registerSurveyorPush(), 1500);
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(() => {});
