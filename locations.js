@@ -310,7 +310,7 @@
     render();
   }
 
-  function listRow(row, { title, meta }) {
+  function listRow(row, { title, meta, open = true }) {
     const inactive = row.is_active === false;
     const adminButtons = isAdmin ? `
       <button class="text-button" data-edit="${row.id}">Edit</button>
@@ -319,7 +319,7 @@
         : `<button class="text-button danger" data-deactivate="${row.id}">Nonaktifkan</button>`}
     ` : '';
     return `<div class="admin-row loc-row ${inactive ? 'loc-row-inactive' : ''}">
-      <div class="loc-row-main" data-open="${row.id}"><strong>${esc(title)}${inactive ? ' <span class="loc-badge">Nonaktif</span>' : ''}</strong><small>${esc(meta)}</small></div>
+      <div class="loc-row-main" ${open ? `data-open="${row.id}"` : ''}><strong>${esc(title)}${inactive ? ' <span class="loc-badge">Nonaktif</span>' : ''}</strong><small>${esc(meta)}</small></div>
       <span>${adminButtons}</span>
     </div>`;
   }
@@ -328,8 +328,8 @@
     const list = visible(sites);
     return `
       <div class="panel">
-        <div class="panel-header"><div><span class="eyebrow">PROJECT</span><h2>Semua Project (${list.length})</h2></div>${isAdmin ? '<button id="loc-add" class="primary-button">+ Tambah Site</button>' : ''}</div>
-        <div class="admin-list">${list.map(s => listRow(s, { title: s.name, meta: s.location || 'Lokasi belum diisi', level: 'site', table: 'projects' })).join('') || '<small>Belum ada Site.</small>'}</div>
+        <div class="panel-header"><div><span class="eyebrow">PROJECT</span><h2>Semua Project (${list.length})</h2></div>${isAdmin ? '<button id="loc-add" class="primary-button">+ Tambah Project</button>' : ''}</div>
+        <div class="admin-list">${list.map(s => listRow(s, { title: s.name, meta: s.location || 'Lokasi belum diisi', level: 'site', table: 'projects' })).join('') || '<small>Belum ada Project.</small>'}</div>
       </div>`;
   }
 
@@ -365,7 +365,7 @@
     return `
       <div class="panel">
         <div class="panel-header"><div><span class="eyebrow">ITEM</span><h2>${esc(roomOf(view.roomId)?.name || '')} (${list.length})</h2></div>${isAdmin ? '<button id="loc-add" class="primary-button">+ Tambah Item</button>' : ''}</div>
-        <div class="admin-list">${list.map(i => listRow(i, { title: i.name, meta: `${i.quantity} unit${i.description ? ' · ' + i.description : ''}`, level: 'item', table: 'catalog_items' })).join('') || '<small>Belum ada Item.</small>'}</div>
+        <div class="admin-list">${list.map(i => listRow(i, { title: i.name, meta: `${i.quantity} unit${i.description ? ' ·  + i.description : ''}`, level: 'item', table: 'catalog_items' })).join('') || '<small>Belum ada Item.</small>'}</div>
       </div>`;
   }
 
@@ -376,7 +376,7 @@
     $('#loc-breadcrumb').querySelectorAll('[data-crumb]').forEach(a => a.onclick = e => { e.preventDefault(); bc[Number(a.dataset.crumb)].onclick(); });
 
     const toolbar = `<div class="loc-toolbar">
-      <a href="#" id="loc-unassigned-link">Item belum punya Room (${unassignedItems().length})</a>
+      <span>Struktur lokasi: <b>Project → Building → Floor → Room</b></span>
       ${isAdmin ? `<label class="loc-checkbox"><input type="checkbox" id="loc-show-inactive" ${showInactive ? 'checked' : ''}> Tampilkan yang nonaktif</label>` : ''}
     </div>`;
 
@@ -386,22 +386,23 @@
     else if (view.level === 'buildings') body = renderBuildings();
     else if (view.level === 'floors') body = renderFloors();
     else if (view.level === 'rooms') body = renderRooms();
-    else body = renderItems();
+    else body = renderSites();
 
     root.innerHTML = toolbar + body;
 
-    $('#loc-unassigned-link').onclick = e => { e.preventDefault(); view.level = 'unassigned'; render(); };
     const showInactiveBox = $('#loc-show-inactive');
     if (showInactiveBox) showInactiveBox.onchange = () => { showInactive = showInactiveBox.checked; render(); };
 
-    if (view.level === 'unassigned') { wireUnassigned(root); return; }
+    if (view.level === 'unassigned') { return; }
 
     root.querySelectorAll('[data-open]').forEach(el => el.onclick = () => {
       const id = el.dataset.open;
       if (view.level === 'sites') go('buildings', { siteId: id });
       else if (view.level === 'buildings') go('floors', { buildingId: id });
       else if (view.level === 'floors') go('rooms', { floorId: id });
-      else if (view.level === 'rooms') go('items', { roomId: id });
+      else if (view.level === 'rooms') {
+        window.route?.('list-items');
+      }
     });
 
     const addBtn = $('#loc-add');
