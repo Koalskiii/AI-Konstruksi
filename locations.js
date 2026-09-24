@@ -376,12 +376,69 @@
 
   function renderRooms() {
     const list = visible(rooms.filter(r => r.floor_id === view.floorId));
+    const selected = view.roomId ? roomOf(view.roomId) : null;
+    const selectedItems = selected ? itemsOfRoom(selected.id) : [];
+    const roomItems = selectedItems.map(item => `
+      <div class="room-item-row">
+        <div class="room-item-main">
+          <strong>${esc(item.item_code || 'Tanpa kode')} — ${esc(item.name)}</strong>
+          <small>${Number(item.quantity || 0)} unit</small>
+        </div>
+        <span class="loc-badge">${item.is_active === false ? 'Nonaktif' : 'Aktif'}</span>
+      </div>`).join('');
+
     return `
-      <div class="panel">
-        <div class="panel-header"><div><span class="eyebrow">ROOM</span><h2>${esc(floorOf(view.floorId)?.name || '')} (${list.length})</h2></div>${isAdmin ? '<button id="loc-add" class="primary-button">+ Tambah Room</button>' : ''}</div>
-        <div class="admin-list">${list.map(r => listRow(r, { title: r.name, meta: `${r.room_type ? r.room_type + ' · ' : ''}${r.status}`, level: 'room', table: 'rooms', open: true })).join('') || '<small>Belum ada Room.</small>'}</div>
-        <div class="loc-toolbar"><span>Asset di dalam Room dikelola dari <b>List Item</b>.</span><a href="#list-items" class="text-button">Buka List Item</a></div>
-      </div>`;
+      <div class="room-browser">
+        <section class="panel room-browser-rooms">
+          <div class="panel-header">
+            <div><span class="eyebrow">ROOM</span><h2>${esc(floorOf(view.floorId)?.name || '')} (${list.length})</h2></div>
+            ${isAdmin ? '<button id="loc-add" class="primary-button">+ Tambah Room</button>' : ''}
+          </div>
+          <div class="admin-list room-select-list">
+            ${list.map(r => `
+              <div class="admin-row loc-row room-select-row ${selected?.id === r.id ? 'is-selected' : ''}" data-room-select="${r.id}">
+                <div class="loc-row-main">
+                  <strong>${esc(r.name)}${r.is_active === false ? ' <span class="loc-badge">Nonaktif</span>' : ''}</strong>
+                  <small>${esc(`${r.room_type ? r.room_type + ' · ' : ''}${r.status}`)}</small>
+                </div>
+                ${isAdmin ? `<span class="room-row-actions">
+                  <button type="button" class="text-button" data-edit="${r.id}">Edit</button>
+                  ${r.is_active === false ? `<button type="button" class="text-button" data-restore="${r.id}">Aktifkan</button>` : `<button type="button" class="text-button danger" data-deactivate="${r.id}">Nonaktifkan</button>`}
+                </span>` : ''}
+              </div>`).join('') || '<small>Belum ada Room.</small>'}
+          </div>
+        </section>
+
+        <section class="panel room-browser-items">
+          ${selected ? `
+            <div class="panel-header">
+              <div>
+                <span class="eyebrow">LIST ITEM</span>
+                <h2>${esc(selected.name)}</h2>
+                <p>Semua item yang terdaftar pada room ini.</p>
+              </div>
+              <span class="loc-badge">${selectedItems.length} item</span>
+            </div>
+            <div class="room-items-list">
+              ${roomItems || `
+                <div class="room-empty-state">
+                  <strong>Belum ada List Item.</strong>
+                  <span>Item untuk room ini bisa ditambahkan melalui <b>List Item</b>.</span>
+                  <a href="#list-items" class="secondary-button">Buka List Item</a>
+                </div>`}
+            </div>
+          ` : `
+            <div class="room-items-placeholder">
+              <span class="eyebrow">LIST ITEM</span>
+              <h2>Pilih sebuah room</h2>
+              <p>Klik room di sebelah kiri untuk melihat seluruh item yang terdaftar pada room tersebut.</p>
+            </div>
+          `}
+        </section>
+      </div>
+
+      <div class="loc-toolbar"><span>Asset di dalam Room dikelola dari <b>List Item</b>.</span><a href="#list-items" class="text-button">Buka List Item</a></div>
+    `;
   }
 
   function checklistKey(roomId) {
@@ -462,6 +519,14 @@
 
     if (view.level === 'unassigned') { return; }
 
+    root.querySelectorAll('[data-room-select]').forEach(el => {
+      el.onclick = event => {
+        if (event.target.closest('button')) return;
+        view.roomId = el.dataset.roomSelect;
+        render();
+      };
+    });
+
     root.querySelectorAll('[data-room-check]').forEach(input => {
       input.onchange = () => {
         const room = roomOf(view.roomId);
@@ -477,9 +542,10 @@
       const id = el.dataset.open;
       if (view.level === 'sites') go('buildings', { siteId: id });
       else if (view.level === 'buildings') go('floors', { buildingId: id });
-      else if (view.level === 'floors') go('rooms', { floorId: id });
+      else if (view.level === 'floors') go('rooms', { floorId: id, roomId: null });
       else if (view.level === 'rooms') {
-        go('room-detail', { floorId: view.floorId, roomId: id, buildingId: view.buildingId, siteId: view.siteId });
+        view.roomId = id;
+        render();
       }
     });
 
