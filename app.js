@@ -531,65 +531,33 @@ async function signUp() {
   ====================================================== */
 
   /* =====================================================
-     EMAIL CONFIRMATION
+     REGISTRATION SUCCESS
+     
+     Email confirmation is intentionally not part of the
+     AIKON registration flow. Access is controlled by Admin
+     approval in public.profiles.approval_status.
+     
+     If Supabase Confirm Email is disabled, data.session
+     exists and the new account may be temporarily signed in.
+     We still sign out immediately because the profile is
+     pending and must not enter the application.
   ====================================================== */
 
-  if (!data.session) {
-
-    toast(
-      'Akun berhasil dibuat. Cek email untuk verifikasi.'
-    );
-
-
-    $('#signup-name').value =
-      '';
-
-    $('#signup-username').value =
-      '';
-
-    $('#signup-email').value =
-      '';
-
-    $('#signup-password').value =
-      '';
-
-    $('#signup-role').value =
-      '';
-
-
-    showLogin();
-
-    return;
-
+  if (data.session) {
+    await supabaseClient.auth.signOut();
   }
 
-
-  /* =====================================================
-     SUCCESS
-  ====================================================== */
+  $('#signup-name').value = '';
+  $('#signup-username').value = '';
+  $('#signup-email').value = '';
+  $('#signup-password').value = '';
+  $('#signup-role').value = '';
 
   toast(
-    'Akun berhasil dibuat.'
+    'Registrasi berhasil. Sampaikan ke Admin bahwa Anda sudah mendaftar. Akun akan aktif setelah disetujui.'
   );
 
-
-  $('#signup-name').value =
-    '';
-
-  $('#signup-username').value =
-    '';
-
-  $('#signup-email').value =
-    '';
-
-  $('#signup-password').value =
-    '';
-
-  $('#signup-role').value =
-    '';
-
-
-  await loadUser();
+  showLogin();
 
 }
 
