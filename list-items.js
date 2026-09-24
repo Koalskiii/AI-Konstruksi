@@ -8,9 +8,7 @@
 (() => {
   const URL = 'https://kiyneeejluyqzvgdfljt.supabase.co';
   const KEY = 'sb_publishable_NGf9sH1tagHPRfPJRcUvtg_vFJIPF6W';
-  const db = window.supabase.createClient(URL, KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
-  });
+  const db = window.aikonSupabaseClient || window.supabase.createClient(URL, KEY);
 
   const $ = selector => document.querySelector(selector);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
