@@ -523,49 +523,12 @@ async function signUp() {
 
 
   /* =====================================================
-     CREATE PROFILE
+     PROFILE CREATION
 
-     We keep this compatible with the
-     current profiles structure.
+     Supabase already creates public.profiles through the
+     on_auth_user_created trigger using the signup metadata.
+     Do not insert into profiles again here.
   ====================================================== */
-
-  const {
-    error: profileError
-  } =
-    await supabaseClient
-
-      .from('profiles')
-
-      .insert({
-
-        id:
-          data.user.id,
-
-        username,
-
-        full_name:
-          fullName,
-
-        role:
-          requestedRole
-
-      });
-
-
-  if (profileError) {
-
-    console.error(
-      profileError
-    );
-
-    toast(
-      'Akun berhasil dibuat, tetapi profil gagal disimpan.'
-    );
-
-    return;
-
-  }
-
 
   /* =====================================================
      EMAIL CONFIRMATION
