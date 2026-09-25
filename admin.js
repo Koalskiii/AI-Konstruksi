@@ -153,5 +153,17 @@
     };
   }
 
-  document.addEventListener('DOMContentLoaded', () => setTimeout(() => init().catch(error => console.error('Admin UI:', error)), 1000));
+  async function bootAdmin() {
+    try {
+      await init();
+    } catch (error) {
+      console.error('Admin UI:', error);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootAdmin, { once: true });
+  } else {
+    bootAdmin();
+  }
 })();
