@@ -50,7 +50,7 @@
             <div><strong>${esc(p.full_name || p.username || 'User')}</strong><small>${esc(p.email || '')} · Role diminta: <b>${esc(row.requested_role)}</b> · ${new Date(row.created_at).toLocaleString('id-ID')}</small></div>
             <div class="admin-review-actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
               <select class="admin-role-select" data-role-user="${row.id}" aria-label="Role user">
-                <option value="Field User">Field User</option><option value="Surveyor">Surveyor</option><option value="Supervisor">Supervisor</option><option value="QA/QC">QA/QC</option><option value="PM">PM</option>
+                <option value="Field User">Field User</option><option value="PM & Supervisor">PM & Supervisor</option><option value="QA/QC">QA/QC</option><option value="Owner">Owner</option>
               </select>
               <button class="text-button" data-approve-user="${row.id}">Accept</button>
               <button class="text-button danger" data-reject-user="${row.id}">Reject</button>
@@ -153,5 +153,17 @@
     };
   }
 
-  document.addEventListener('DOMContentLoaded', () => setTimeout(() => init().catch(error => console.error('Admin UI:', error)), 1000));
+  async function bootAdmin() {
+    try {
+      await init();
+    } catch (error) {
+      console.error('Admin UI:', error);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootAdmin, { once: true });
+  } else {
+    bootAdmin();
+  }
 })();
